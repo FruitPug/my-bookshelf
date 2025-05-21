@@ -7,6 +7,7 @@ import com.example.MyBookshelf.repository.BookRepository;
 import com.example.MyBookshelf.repository.UserRepository;
 import com.example.MyBookshelf.service.ReviewService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,15 +24,24 @@ public class ReviewController {
     private final UserRepository userRepository;
 
     @PostMapping("/book/{bookId}")
-    public ResponseEntity<Review> addReviewToBook(@PathVariable Long bookId, @RequestBody Review review) {
-        return bookRepository.findById(bookId)
-                .map(book -> {
-                    review.setBookId(bookId);
-                    Review savedReview = reviewService.addReview(review);
-                    return ResponseEntity.ok(savedReview);
-                })
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Review> addReviewToBook(@PathVariable Long bookId, @RequestBody ReviewDto reviewDto) {
+        return bookRepository.findById(bookId).map(book -> {
+            Optional<User> optionalUser = userRepository.findById(reviewDto.getUserId());
+            if (optionalUser.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).<Review>body(null);
+            }
+
+            Review review = new Review();
+            review.setBookId(bookId);
+            review.setUser(optionalUser.get());
+            review.setComment(reviewDto.getComment());
+            review.setRating(reviewDto.getRating());
+
+            Review savedReview = reviewService.addReview(review);
+            return ResponseEntity.ok(savedReview);
+        }).orElse(ResponseEntity.notFound().build());
     }
+
 
     @GetMapping
     public List<Review> getAllReviews() {
