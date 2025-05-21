@@ -1,6 +1,10 @@
 package com.example.MyBookshelf.controller;
 
+import com.example.MyBookshelf.dto.UserDto;
+import com.example.MyBookshelf.dto.request.UserCreateDto;
+import com.example.MyBookshelf.dto.responce.UserResponseDto;
 import com.example.MyBookshelf.entity.User;
+import com.example.MyBookshelf.mapper.UserMapper;
 import com.example.MyBookshelf.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,24 +20,29 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
+    public List<UserResponseDto> getAllUsers() {
+        return userService.getAllUsers().stream()
+                .map(UserMapper::toResponseDto)
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long id) {
         return userService.getUserById(id)
+                .map(UserMapper::toResponseDto)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public User addUser(@RequestBody User user) {
-        return userService.saveUser(user);
+    public ResponseEntity<UserDto> addUser(@RequestBody UserCreateDto userRequestDto) {
+        User savedUser = userService.saveUser(UserMapper.fromCreateDto(userRequestDto));
+        return ResponseEntity.ok(UserMapper.toDto(savedUser));
     }
 
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }

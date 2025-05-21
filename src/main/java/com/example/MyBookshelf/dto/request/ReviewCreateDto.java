@@ -1,11 +1,11 @@
-package com.example.MyBookshelf.dto;
+package com.example.MyBookshelf.dto.request;
 
 import lombok.Data;
 
 @Data
-public class ReviewDto {
+
+public class ReviewCreateDto {
     private Long userId;
-    private Long bookId;
     private String comment;
     private double rating;
 }

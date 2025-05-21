@@ -17,7 +17,8 @@ public class ReviewService {
         return reviewRepository.findAll();
     }
 
-    public Review addReview(Review review) {
+    public Review addReview(Long bookId, Review review) {
+        review.setBookId(bookId);
         return reviewRepository.save(review);
     }
 
