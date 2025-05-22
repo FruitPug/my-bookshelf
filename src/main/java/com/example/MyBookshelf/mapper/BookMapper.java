@@ -3,7 +3,10 @@ package com.example.MyBookshelf.mapper;
 import com.example.MyBookshelf.dto.BookDto;
 import com.example.MyBookshelf.dto.request.BookCreateDto;
 import com.example.MyBookshelf.dto.responce.BookResponseDto;
+import com.example.MyBookshelf.dto.responce.ReviewResponseDto;
 import com.example.MyBookshelf.entity.Book;
+
+import java.util.List;
 
 public class BookMapper {
 
@@ -16,9 +19,15 @@ public class BookMapper {
         dto.setStatus(book.getStatus());
         dto.setRating(book.getRating());
         dto.setReviewCount(book.getReviewCount());
-        dto.setReviews(book.getReviews());
+
+        List<ReviewResponseDto> reviewsDto = book.getReviews().stream()
+                .map(ReviewMapper::toResponseDto)
+                .toList();
+        dto.setReviews(reviewsDto);
+
         return dto;
     }
+
 
     public static BookDto toDto(Book book) {
         BookDto dto = new BookDto();

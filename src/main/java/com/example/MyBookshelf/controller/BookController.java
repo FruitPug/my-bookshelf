@@ -9,6 +9,8 @@ import com.example.MyBookshelf.service.BookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -20,10 +22,9 @@ public class BookController {
     private final BookService bookService;
 
     @GetMapping
-    public List<BookResponseDto> getAllBooks() {
-        return bookService.getAllBooks().stream()
-                .map(BookMapper::toResponseDto)
-                .toList();
+    public Page<BookResponseDto> getAllBooks(Pageable pageable) {
+        return bookService.getAllBooks(pageable)
+                .map(BookMapper::toResponseDto);
     }
 
     @GetMapping("/{id}")
@@ -33,6 +34,21 @@ public class BookController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @GetMapping("/filter/genre/{genre}")
+    public List<BookResponseDto> getByGenre(@PathVariable String genre) {
+        return bookService.getBooksByGenre(genre).stream()
+                .map(BookMapper::toResponseDto)
+                .toList();
+    }
+
+    @GetMapping("/filter/status/{status}")
+    public List<BookResponseDto> getByStatus(@PathVariable String status) {
+        return bookService.getBooksByStatus(status).stream()
+                .map(BookMapper::toResponseDto)
+                .toList();
+    }
+
 
     @PostMapping
     public ResponseEntity<BookDto> addBook(@RequestBody BookCreateDto bookRequestDto) {

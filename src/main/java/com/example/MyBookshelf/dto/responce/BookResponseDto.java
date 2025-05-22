@@ -14,7 +14,7 @@ public class BookResponseDto {
     private String genre;
     private String status;
     private double rating;
-    private List<Review> reviews = new ArrayList<>();
+    private List<ReviewResponseDto> reviews = new ArrayList<>();
     private int reviewCount;
 }
 
