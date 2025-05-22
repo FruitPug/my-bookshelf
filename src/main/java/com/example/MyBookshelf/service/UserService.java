@@ -1,6 +1,6 @@
 package com.example.MyBookshelf.service;
 
-import com.example.MyBookshelf.entity.User;
+import com.example.MyBookshelf.entity.UserEntity;
 import com.example.MyBookshelf.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,16 +14,16 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public List<User> getAllUsers() {
+    public List<UserEntity> getAllUsers() {
         return userRepository.findAll();
     }
 
-    public Optional<User> getUserById(Long id) {
+    public Optional<UserEntity> getUserById(Long id) {
         return userRepository.findById(id);
     }
 
-    public User saveUser(User user) {
-        return userRepository.save(user);
+    public UserEntity saveUser(UserEntity userEntity) {
+        return userRepository.save(userEntity);
     }
 
     public void deleteUser(Long id) {

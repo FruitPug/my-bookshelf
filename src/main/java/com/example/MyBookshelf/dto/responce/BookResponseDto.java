@@ -1,6 +1,5 @@
 package com.example.MyBookshelf.dto.responce;
 
-import com.example.MyBookshelf.entity.Review;
 import lombok.Data;
 
 import java.util.ArrayList;

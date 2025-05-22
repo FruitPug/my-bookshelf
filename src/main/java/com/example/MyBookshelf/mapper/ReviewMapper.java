@@ -3,35 +3,35 @@ package com.example.MyBookshelf.mapper;
 import com.example.MyBookshelf.dto.ReviewDto;
 import com.example.MyBookshelf.dto.request.ReviewCreateDto;
 import com.example.MyBookshelf.dto.responce.ReviewResponseDto;
-import com.example.MyBookshelf.entity.Review;
+import com.example.MyBookshelf.entity.ReviewEntity;
 
 public class ReviewMapper {
 
-    public static ReviewResponseDto toResponseDto(Review review) {
+    public static ReviewResponseDto toResponseDto(ReviewEntity reviewEntity) {
         ReviewResponseDto dto = new ReviewResponseDto();
-        dto.setId(review.getId());
-        dto.setBookId(review.getBookId());
-        dto.setUsername(review.getUser().getUsername());
-        dto.setComment(review.getComment());
-        dto.setRating(review.getRating());
+        dto.setId(reviewEntity.getId());
+        dto.setBookId(reviewEntity.getBookId());
+        dto.setUsername(reviewEntity.getUserEntity().getUsername());
+        dto.setComment(reviewEntity.getComment());
+        dto.setRating(reviewEntity.getRating());
         return dto;
     }
 
-    public static ReviewDto toDto(Review review) {
+    public static ReviewDto toDto(ReviewEntity reviewEntity) {
         ReviewDto dto = new ReviewDto();
-        dto.setUserId(review.getUserId());
-        dto.setBookId(review.getBookId());
-        dto.setComment(review.getComment());
-        dto.setRating(review.getRating());
+        dto.setUserId(reviewEntity.getUserId());
+        dto.setBookId(reviewEntity.getBookId());
+        dto.setComment(reviewEntity.getComment());
+        dto.setRating(reviewEntity.getRating());
         return dto;
     }
 
-    public static Review fromRequestDto(ReviewCreateDto dto) {
-        Review review = new Review();
-        review.setUserId(dto.getUserId());
-        review.setRating(dto.getRating());
-        review.setComment(dto.getComment());
-        return review;
+    public static ReviewEntity fromRequestDto(ReviewCreateDto dto) {
+        ReviewEntity reviewEntity = new ReviewEntity();
+        reviewEntity.setUserId(dto.getUserId());
+        reviewEntity.setRating(dto.getRating());
+        reviewEntity.setComment(dto.getComment());
+        return reviewEntity;
     }
 
 }

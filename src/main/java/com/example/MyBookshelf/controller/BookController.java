@@ -3,7 +3,7 @@ package com.example.MyBookshelf.controller;
 import com.example.MyBookshelf.dto.BookDto;
 import com.example.MyBookshelf.dto.request.BookCreateDto;
 import com.example.MyBookshelf.dto.responce.BookResponseDto;
-import com.example.MyBookshelf.entity.Book;
+import com.example.MyBookshelf.entity.BookEntity;
 import com.example.MyBookshelf.mapper.BookMapper;
 import com.example.MyBookshelf.service.BookService;
 import lombok.RequiredArgsConstructor;
@@ -52,8 +52,8 @@ public class BookController {
 
     @PostMapping
     public ResponseEntity<BookDto> addBook(@RequestBody BookCreateDto bookRequestDto) {
-        Book savedBook = bookService.saveBook(BookMapper.fromCreateDto(bookRequestDto));
-        return ResponseEntity.ok(BookMapper.toDto(savedBook));
+        BookEntity savedBookEntity = bookService.saveBook(BookMapper.fromCreateDto(bookRequestDto));
+        return ResponseEntity.ok(BookMapper.toDto(savedBookEntity));
     }
 
     @DeleteMapping("/{id}")

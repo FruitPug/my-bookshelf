@@ -1,6 +1,6 @@
 package com.example.MyBookshelf.service;
 
-import com.example.MyBookshelf.entity.Book;
+import com.example.MyBookshelf.entity.BookEntity;
 import com.example.MyBookshelf.repository.BookRepository;
 import com.example.MyBookshelf.util.IteratorUtils;
 import lombok.RequiredArgsConstructor;
@@ -19,36 +19,36 @@ public class BookService {
 
     private final BookRepository bookRepository;
 
-    public Page<Book> getAllBooks(Pageable pageable) {
+    public Page<BookEntity> getAllBooks(Pageable pageable) {
         return bookRepository.findAll(pageable);
     }
 
-    public Optional<Book> getBookById(Long id) {
+    public Optional<BookEntity> getBookById(Long id) {
         return bookRepository.findById(id);
     }
 
-    public List<Book> getBooksByGenre(String genre) {
-        List<Book> all = bookRepository.findAll();
-        Iterator<Book> it = IteratorUtils.filterIterator(all, b -> genre.equalsIgnoreCase(b.getGenre()));
-        List<Book> filtered = new ArrayList<>();
+    public List<BookEntity> getBooksByGenre(String genre) {
+        List<BookEntity> all = bookRepository.findAll();
+        Iterator<BookEntity> it = IteratorUtils.filterIterator(all, b -> genre.equalsIgnoreCase(b.getGenre()));
+        List<BookEntity> filtered = new ArrayList<>();
         while (it.hasNext()) {
             filtered.add(it.next());
         }
         return filtered;
     }
 
-    public List<Book> getBooksByStatus(String status) {
-        List<Book> all = bookRepository.findAll();
-        Iterator<Book> it = IteratorUtils.filterIterator(all, b -> status.equalsIgnoreCase(b.getStatus()));
-        List<Book> filtered = new ArrayList<>();
+    public List<BookEntity> getBooksByStatus(String status) {
+        List<BookEntity> all = bookRepository.findAll();
+        Iterator<BookEntity> it = IteratorUtils.filterIterator(all, b -> status.equalsIgnoreCase(b.getStatus()));
+        List<BookEntity> filtered = new ArrayList<>();
         while (it.hasNext()) {
             filtered.add(it.next());
         }
         return filtered;
     }
 
-    public Book saveBook(Book book) {
-        return bookRepository.save(book);
+    public BookEntity saveBook(BookEntity bookEntity) {
+        return bookRepository.save(bookEntity);
     }
 
     public void deleteBook(Long id) {

@@ -3,8 +3,8 @@ package com.example.MyBookshelf.controller;
 import com.example.MyBookshelf.dto.ReviewDto;
 import com.example.MyBookshelf.dto.request.ReviewCreateDto;
 import com.example.MyBookshelf.dto.responce.ReviewResponseDto;
-import com.example.MyBookshelf.entity.Review;
-import com.example.MyBookshelf.entity.User;
+import com.example.MyBookshelf.entity.ReviewEntity;
+import com.example.MyBookshelf.entity.UserEntity;
 import com.example.MyBookshelf.mapper.ReviewMapper;
 import com.example.MyBookshelf.repository.BookRepository;
 import com.example.MyBookshelf.repository.UserRepository;
@@ -29,14 +29,14 @@ public class ReviewController {
     @PostMapping("/book/{bookId}")
     public ResponseEntity<ReviewDto> addReview(@PathVariable Long bookId, @RequestBody ReviewCreateDto reviewCreateDto) {
         return bookRepository.findById(bookId).map(book -> {
-            Optional<User> optionalUser = userRepository.findById(reviewCreateDto.getUserId());
+            Optional<UserEntity> optionalUser = userRepository.findById(reviewCreateDto.getUserId());
             if (optionalUser.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).<ReviewDto>body(null);
             }
 
-            Review review = reviewService.addReview(bookId, ReviewMapper.fromRequestDto(reviewCreateDto));
+            ReviewEntity reviewEntity = reviewService.addReview(bookId, ReviewMapper.fromRequestDto(reviewCreateDto));
 
-            return ResponseEntity.ok(ReviewMapper.toDto(review));
+            return ResponseEntity.ok(ReviewMapper.toDto(reviewEntity));
         }).orElse(ResponseEntity.notFound().build());
     }
 

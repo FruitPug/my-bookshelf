@@ -3,28 +3,28 @@ package com.example.MyBookshelf.mapper;
 import com.example.MyBookshelf.dto.UserDto;
 import com.example.MyBookshelf.dto.request.UserCreateDto;
 import com.example.MyBookshelf.dto.responce.UserResponseDto;
-import com.example.MyBookshelf.entity.User;
+import com.example.MyBookshelf.entity.UserEntity;
 
 public class UserMapper {
 
-    public static UserResponseDto toResponseDto(User user) {
+    public static UserResponseDto toResponseDto(UserEntity userEntity) {
         UserResponseDto dto = new UserResponseDto();
-        dto.setId(user.getId());
-        dto.setName(user.getUsername());
+        dto.setId(userEntity.getId());
+        dto.setName(userEntity.getUsername());
         return dto;
     }
 
-    public static UserDto toDto(User user) {
+    public static UserDto toDto(UserEntity userEntity) {
         UserDto dto = new UserDto();
-        dto.setId(user.getId());
-        dto.setUsername(user.getUsername());
+        dto.setId(userEntity.getId());
+        dto.setUsername(userEntity.getUsername());
         return dto;
     }
 
-    public static User fromCreateDto(UserCreateDto dto) {
-        User user = new User();
-        user.setUsername(dto.getName());
-        user.setEmail(dto.getEmail());
-        return user;
+    public static UserEntity fromCreateDto(UserCreateDto dto) {
+        UserEntity userEntity = new UserEntity();
+        userEntity.setUsername(dto.getName());
+        userEntity.setEmail(dto.getEmail());
+        return userEntity;
     }
 }

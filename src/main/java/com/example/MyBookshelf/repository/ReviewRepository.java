@@ -1,7 +1,14 @@
 package com.example.MyBookshelf.repository;
 
-import com.example.MyBookshelf.entity.Review;
+import com.example.MyBookshelf.entity.ReviewEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface ReviewRepository extends JpaRepository<Review, Long> {
+import java.util.List;
+
+@Repository
+public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> {
+
+    List<ReviewEntity> findByBookId(Long bookId);
+
 }

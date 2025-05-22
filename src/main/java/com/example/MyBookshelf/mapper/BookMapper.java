@@ -4,23 +4,23 @@ import com.example.MyBookshelf.dto.BookDto;
 import com.example.MyBookshelf.dto.request.BookCreateDto;
 import com.example.MyBookshelf.dto.responce.BookResponseDto;
 import com.example.MyBookshelf.dto.responce.ReviewResponseDto;
-import com.example.MyBookshelf.entity.Book;
+import com.example.MyBookshelf.entity.BookEntity;
 
 import java.util.List;
 
 public class BookMapper {
 
-    public static BookResponseDto toResponseDto(Book book) {
+    public static BookResponseDto toResponseDto(BookEntity bookEntity) {
         BookResponseDto dto = new BookResponseDto();
-        dto.setId(book.getId());
-        dto.setTitle(book.getTitle());
-        dto.setAuthor(book.getAuthor());
-        dto.setGenre(book.getGenre());
-        dto.setStatus(book.getStatus());
-        dto.setRating(book.getRating());
-        dto.setReviewCount(book.getReviewCount());
+        dto.setId(bookEntity.getId());
+        dto.setTitle(bookEntity.getTitle());
+        dto.setAuthor(bookEntity.getAuthor());
+        dto.setGenre(bookEntity.getGenre());
+        dto.setStatus(bookEntity.getStatus());
+        dto.setRating(bookEntity.getRating());
+        dto.setReviewCount(bookEntity.getReviewCount());
 
-        List<ReviewResponseDto> reviewsDto = book.getReviews().stream()
+        List<ReviewResponseDto> reviewsDto = bookEntity.getReviewEntities().stream()
                 .map(ReviewMapper::toResponseDto)
                 .toList();
         dto.setReviews(reviewsDto);
@@ -29,23 +29,23 @@ public class BookMapper {
     }
 
 
-    public static BookDto toDto(Book book) {
+    public static BookDto toDto(BookEntity bookEntity) {
         BookDto dto = new BookDto();
-        dto.setId(book.getId());
-        dto.setTitle(book.getTitle());
-        dto.setAuthor(book.getAuthor());
-        dto.setGenre(book.getGenre());
-        dto.setStatus(book.getStatus());
+        dto.setId(bookEntity.getId());
+        dto.setTitle(bookEntity.getTitle());
+        dto.setAuthor(bookEntity.getAuthor());
+        dto.setGenre(bookEntity.getGenre());
+        dto.setStatus(bookEntity.getStatus());
         return dto;
     }
 
-    public static Book fromCreateDto(BookCreateDto dto) {
-        Book book = new Book();
-        book.setTitle(dto.getTitle());
-        book.setAuthor(dto.getAuthor());
-        book.setGenre(dto.getGenre());
-        book.setStatus(dto.getStatus());
-        return book;
+    public static BookEntity fromCreateDto(BookCreateDto dto) {
+        BookEntity bookEntity = new BookEntity();
+        bookEntity.setTitle(dto.getTitle());
+        bookEntity.setAuthor(dto.getAuthor());
+        bookEntity.setGenre(dto.getGenre());
+        bookEntity.setStatus(dto.getStatus());
+        return bookEntity;
     }
 }
 

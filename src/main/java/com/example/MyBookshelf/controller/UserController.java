@@ -3,7 +3,7 @@ package com.example.MyBookshelf.controller;
 import com.example.MyBookshelf.dto.UserDto;
 import com.example.MyBookshelf.dto.request.UserCreateDto;
 import com.example.MyBookshelf.dto.responce.UserResponseDto;
-import com.example.MyBookshelf.entity.User;
+import com.example.MyBookshelf.entity.UserEntity;
 import com.example.MyBookshelf.mapper.UserMapper;
 import com.example.MyBookshelf.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +36,8 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<UserDto> addUser(@RequestBody UserCreateDto userRequestDto) {
-        User savedUser = userService.saveUser(UserMapper.fromCreateDto(userRequestDto));
-        return ResponseEntity.ok(UserMapper.toDto(savedUser));
+        UserEntity savedUserEntity = userService.saveUser(UserMapper.fromCreateDto(userRequestDto));
+        return ResponseEntity.ok(UserMapper.toDto(savedUserEntity));
     }
 
     @DeleteMapping("/{id}")
