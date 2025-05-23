@@ -24,7 +24,7 @@ public class ReviewService {
 
     @Transactional
     public ReviewEntity addReview(Long bookId, ReviewEntity reviewEntity) {
-        reviewEntity.setBookId(bookId);
+        reviewEntity.setBook(bookRepository.findById(bookId).get());
         ReviewEntity saved = reviewRepository.save(reviewEntity);
 
         BookEntity book = bookRepository.findById(bookId)
@@ -48,7 +48,7 @@ public class ReviewService {
     public void deleteReview(Long reviewId) {
         ReviewEntity review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("Review not found: " + reviewId));
-        Long bookId = review.getBookId();
+        Long bookId = review.getBook().getId();
 
         reviewRepository.deleteById(reviewId);
 

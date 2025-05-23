@@ -1,6 +1,5 @@
 package com.example.MyBookshelf.controller;
 
-import com.example.MyBookshelf.dto.ReviewDto;
 import com.example.MyBookshelf.dto.request.ReviewCreateDto;
 import com.example.MyBookshelf.dto.responce.ReviewResponseDto;
 import com.example.MyBookshelf.entity.ReviewEntity;
@@ -10,12 +9,13 @@ import com.example.MyBookshelf.repository.BookRepository;
 import com.example.MyBookshelf.repository.UserRepository;
 import com.example.MyBookshelf.service.ReviewService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/reviews")
@@ -27,17 +27,25 @@ public class ReviewController {
     private final UserRepository userRepository;
 
     @PostMapping("/book/{bookId}")
-    public ResponseEntity<ReviewDto> addReview(@PathVariable Long bookId, @RequestBody ReviewCreateDto reviewCreateDto) {
-        return bookRepository.findById(bookId).map(book -> {
-            Optional<UserEntity> optionalUser = userRepository.findById(reviewCreateDto.getUserId());
-            if (optionalUser.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).<ReviewDto>body(null);
-            }
+    public ResponseEntity<ReviewResponseDto> addReview(
+            @PathVariable Long bookId,
+            @RequestBody ReviewCreateDto dto,
+            Authentication authentication
+    ) {
+        var book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
 
-            ReviewEntity reviewEntity = reviewService.addReview(bookId, ReviewMapper.fromRequestDto(reviewCreateDto));
+        String email = authentication.getName();
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-            return ResponseEntity.ok(ReviewMapper.toDto(reviewEntity));
-        }).orElse(ResponseEntity.notFound().build());
+        ReviewEntity reviewEntity = ReviewMapper.fromRequestDto(dto);
+        reviewEntity.setBook(book);
+        reviewEntity.setUser(user);
+
+        ReviewEntity saved = reviewService.addReview(bookId, reviewEntity);
+        ReviewResponseDto response = ReviewMapper.toResponseDto(saved);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping

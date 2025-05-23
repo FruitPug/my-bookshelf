@@ -1,13 +1,15 @@
 package com.example.MyBookshelf.controller;
 
-import com.example.MyBookshelf.dto.UserDto;
 import com.example.MyBookshelf.dto.request.UserCreateDto;
 import com.example.MyBookshelf.dto.responce.UserResponseDto;
 import com.example.MyBookshelf.entity.UserEntity;
 import com.example.MyBookshelf.mapper.UserMapper;
 import com.example.MyBookshelf.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     @GetMapping
     public List<UserResponseDto> getAllUsers() {
@@ -34,10 +37,25 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDto> me(Authentication auth) {
+        String email = auth.getName();
+        return userService.findByEmail(email)
+                .map(UserMapper::toResponseDto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+    }
+
     @PostMapping
-    public ResponseEntity<UserDto> addUser(@RequestBody UserCreateDto userRequestDto) {
-        UserEntity savedUserEntity = userService.saveUser(UserMapper.fromCreateDto(userRequestDto));
-        return ResponseEntity.ok(UserMapper.toDto(savedUserEntity));
+    public ResponseEntity<UserResponseDto> register(@RequestBody UserCreateDto req) {
+        if (userService.existsByEmail(req.getEmail())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+        UserEntity saved = userService.save(
+                UserMapper.fromCreateDto(req, passwordEncoder)
+        );
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(UserMapper.toResponseDto(saved));
     }
 
     @DeleteMapping("/{id}")

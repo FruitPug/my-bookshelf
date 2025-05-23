@@ -22,11 +22,19 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-    public UserEntity saveUser(UserEntity userEntity) {
-        return userRepository.save(userEntity);
-    }
-
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
+    }
+
+    public UserEntity save(UserEntity user) {
+        return userRepository.save(user);
+    }
+
+    public boolean existsByEmail(String email) {
+        return userRepository.findByEmail(email).isPresent();
+    }
+
+    public Optional<UserEntity> findByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 }
