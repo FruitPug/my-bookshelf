@@ -1,5 +1,6 @@
 package com.example.MyBookshelf.dto.responce;
 
+import com.example.MyBookshelf.status.ReadingStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -12,9 +13,9 @@ public class BookResponseDto {
     private String title;
     private String author;
     private String genre;
-    private String status;
+    private ReadingStatus userStatus;
     private double rating;
-    private List<ReviewResponseDto> reviews;
     private int reviewCount;
+    private List<ReviewResponseDto> reviews;
 }
 

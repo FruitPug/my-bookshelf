@@ -1,6 +1,7 @@
 package com.example.MyBookshelf.repository;
 
 import com.example.MyBookshelf.entity.ReviewEntity;
+import com.example.MyBookshelf.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,5 +11,7 @@ import java.util.List;
 public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> {
 
     List<ReviewEntity> findByBookId(Long bookId);
+
+    List<ReviewEntity> findByUser(UserEntity user);
 
 }

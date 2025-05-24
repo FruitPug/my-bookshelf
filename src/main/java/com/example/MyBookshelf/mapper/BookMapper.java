@@ -1,35 +1,30 @@
 package com.example.MyBookshelf.mapper;
 
-import com.example.MyBookshelf.dto.BookDto;
 import com.example.MyBookshelf.dto.request.BookCreateDto;
 import com.example.MyBookshelf.dto.responce.BookResponseDto;
 import com.example.MyBookshelf.entity.BookEntity;
+import com.example.MyBookshelf.status.ReadingStatus;
+
+import java.util.List;
 
 public class BookMapper {
 
-    public static BookResponseDto toResponseDto(BookEntity bookEntity) {
+    public static BookResponseDto toResponseDto(BookEntity bookEntity, ReadingStatus readingStatus) {
         return BookResponseDto.builder()
                 .id(bookEntity.getId())
                 .title(bookEntity.getTitle())
                 .author(bookEntity.getAuthor())
                 .genre(bookEntity.getGenre())
-                .status(bookEntity.getStatus())
+                .userStatus(readingStatus)
                 .rating(bookEntity.getRating())
                 .reviewCount(bookEntity.getReviewCount())
-                .reviews(bookEntity.getReviewEntities().stream()
-                        .map(ReviewMapper::toResponseDto)
-                        .toList())
-                .build();
-    }
-
-
-    public static BookDto toDto(BookEntity bookEntity) {
-        return BookDto.builder()
-                .id(bookEntity.getId())
-                .title(bookEntity.getTitle())
-                .author(bookEntity.getAuthor())
-                .genre(bookEntity.getGenre())
-                .status(bookEntity.getStatus())
+                .reviews(
+                        bookEntity.getReviewEntities() == null ?
+                                List.of() :
+                                bookEntity.getReviewEntities().stream()
+                                        .map(ReviewMapper::toResponseDto)
+                                        .toList()
+                )
                 .build();
     }
 
@@ -38,7 +33,6 @@ public class BookMapper {
                 .title(dto.getTitle())
                 .author(dto.getAuthor())
                 .genre(dto.getGenre())
-                .status(dto.getStatus())
                 .build();
     }
 }

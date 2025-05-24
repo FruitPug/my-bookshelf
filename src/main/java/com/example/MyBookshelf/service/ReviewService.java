@@ -2,8 +2,11 @@ package com.example.MyBookshelf.service;
 
 import com.example.MyBookshelf.entity.BookEntity;
 import com.example.MyBookshelf.entity.ReviewEntity;
+import com.example.MyBookshelf.entity.UserEntity;
 import com.example.MyBookshelf.repository.BookRepository;
 import com.example.MyBookshelf.repository.ReviewRepository;
+import com.example.MyBookshelf.repository.UserRepository;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,10 +19,13 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final BookRepository bookRepository;
+    private final UserRepository userRepository;
 
 
-    public List<ReviewEntity> getAllReviews() {
-        return reviewRepository.findAll();
+    public List<ReviewEntity> getReviewsByUserEmail(String email) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+        return reviewRepository.findByUser(user);
     }
 
     @Transactional

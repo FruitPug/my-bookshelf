@@ -49,11 +49,13 @@ public class ReviewController {
     }
 
     @GetMapping
-    public List<ReviewResponseDto> getAllReviews() {
-        return reviewService.getAllReviews().stream()
+    public List<ReviewResponseDto> getUserReviews(Authentication authentication) {
+        String userEmail = authentication.getName();
+        return reviewService.getReviewsByUserEmail(userEmail).stream()
                 .map(ReviewMapper::toResponseDto)
                 .toList();
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReview(@PathVariable Long id) {
