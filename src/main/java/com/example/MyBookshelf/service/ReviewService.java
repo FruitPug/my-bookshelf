@@ -31,10 +31,18 @@ public class ReviewService {
     @Transactional
     public ReviewEntity addReview(Long bookId, ReviewEntity reviewEntity) {
         reviewEntity.setBook(bookRepository.findById(bookId).get());
-        ReviewEntity saved = reviewRepository.save(reviewEntity);
 
         BookEntity book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("Book not found: " + bookId));
+
+        UserEntity user = reviewEntity.getUser();
+
+        reviewRepository.findByUserAndBook(user, book)
+                .ifPresent(r -> {
+                    throw new IllegalStateException("You have already reviewed this book");
+                });
+
+        ReviewEntity saved = reviewRepository.save(reviewEntity);
 
         int oldCount = book.getReviewCount();
         double oldAvg  = book.getRating();

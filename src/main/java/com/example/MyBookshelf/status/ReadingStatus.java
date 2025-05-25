@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ReadingStatus {
-    NOT_STARTED("Not started"),
-    CURRENTLY_READING("Currently reading"),
+    PLANNING_TO_READ("Planning to read"),
+    READING("Reading"),
     READ("Read");
 
     private final String label;

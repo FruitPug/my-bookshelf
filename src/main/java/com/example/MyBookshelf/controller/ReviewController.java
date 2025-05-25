@@ -26,28 +26,6 @@ public class ReviewController {
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
 
-    @PostMapping("/book/{bookId}")
-    public ResponseEntity<ReviewResponseDto> addReview(
-            @PathVariable Long bookId,
-            @RequestBody ReviewCreateDto dto,
-            Authentication authentication
-    ) {
-        var book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
-
-        String email = authentication.getName();
-        UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
-
-        ReviewEntity reviewEntity = ReviewMapper.fromRequestDto(dto);
-        reviewEntity.setBook(book);
-        reviewEntity.setUser(user);
-
-        ReviewEntity saved = reviewService.addReview(bookId, reviewEntity);
-        ReviewResponseDto response = ReviewMapper.toResponseDto(saved);
-        return ResponseEntity.ok(response);
-    }
-
     @GetMapping
     public List<ReviewResponseDto> getUserReviews(Authentication authentication) {
         String userEmail = authentication.getName();
@@ -56,6 +34,32 @@ public class ReviewController {
                 .toList();
     }
 
+    @PostMapping("/book/{bookId}")
+    public ResponseEntity<ReviewResponseDto> addReview(
+            @PathVariable Long bookId,
+            @RequestBody ReviewCreateDto dto,
+            Authentication authentication
+    ) {
+        try {
+            var book = bookRepository.findById(bookId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
+
+            String email = authentication.getName();
+            UserEntity user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
+            ReviewEntity reviewEntity = ReviewMapper.fromRequestDto(dto);
+            reviewEntity.setBook(book);
+            reviewEntity.setUser(user);
+
+            ReviewEntity saved = reviewService.addReview(bookId, reviewEntity);
+            ReviewResponseDto response = ReviewMapper.toResponseDto(saved);
+            return ResponseEntity.ok(response);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(null);
+        }
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReview(@PathVariable Long id) {

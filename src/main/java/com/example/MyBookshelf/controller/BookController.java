@@ -38,7 +38,6 @@ public class BookController {
     private final UserBookStatusService statusService;
     private final BookRepository bookRepository;
 
-    /** Paginated list, each with the calling user’s status */
     @GetMapping
     public Page<BookResponseDto> getAllBooks(Pageable pageable, Authentication auth) {
         UserEntity user = loadCurrentUser(auth);
@@ -52,7 +51,6 @@ public class BookController {
                 });
     }
 
-    /** Single book by ID, with user’s status */
     @GetMapping("/{id}")
     public ResponseEntity<BookResponseDto> getBookById(
             @PathVariable Long id,
@@ -72,7 +70,34 @@ public class BookController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /** Filter by genre, with user’s status */
+    @GetMapping("/top-reviewed")
+    public List<BookResponseDto> topReviewed(@RequestParam(defaultValue = "5") int n) {
+        return bookService.findTopReviewed(n).stream()
+                .map(b -> BookMapper.toResponseDto(b, /* userStatus */ null))
+                .toList();
+    }
+
+    @GetMapping("/least-reviewed")
+    public List<BookResponseDto> leastReviewed(@RequestParam(defaultValue = "5") int n) {
+        return bookService.findLeastReviewed(n).stream()
+                .map(b -> BookMapper.toResponseDto(b, /* userStatus */ null))
+                .toList();
+    }
+
+    @GetMapping("/top-rated")
+    public List<BookResponseDto> topRated(@RequestParam(defaultValue = "5") int n) {
+        return bookService.findTopRated(n).stream()
+                .map(b -> BookMapper.toResponseDto(b, /* userStatus */ null))
+                .toList();
+    }
+
+    @GetMapping("/least-rared")
+    public List<BookResponseDto> leastRared(@RequestParam(defaultValue = "5") int n) {
+        return bookService.findLeastRated(n).stream()
+                .map(b -> BookMapper.toResponseDto(b, /* userStatus */ null))
+                .toList();
+    }
+
     @GetMapping("/filter/genre/{genre}")
     public List<BookResponseDto> getByGenre(
             @PathVariable String genre,
@@ -91,7 +116,6 @@ public class BookController {
                 .toList();
     }
 
-    /** Filter by status text (global; still using old iterator) */
     @GetMapping("/filter/status/{status}")
     public List<BookResponseDto> getByStatus(
             @PathVariable String status,
@@ -102,9 +126,7 @@ public class BookController {
         List<BookEntity> books = bookService.getBooksByStatusForUser(user, status);
 
         return books.stream()
-                .map(book -> {
-                    return BookMapper.toResponseDto(book, ReadingStatus.valueOf(status.toUpperCase()));
-                })
+                .map(book -> BookMapper.toResponseDto(book, ReadingStatus.valueOf(status.toUpperCase())))
                 .toList();
     }
 
@@ -122,7 +144,6 @@ public class BookController {
         return ResponseEntity.ok(dtos);
     }
 
-    /** Create a book (registration only) */
     @PostMapping
     public ResponseEntity<BookResponseDto> addBook(@RequestBody BookCreateDto dto) {
         BookEntity saved = bookService.saveBook(BookMapper.fromCreateDto(dto));
@@ -159,7 +180,6 @@ public class BookController {
         return ResponseEntity.noContent().build();
     }
 
-    // --- helper to load current UserEntity or 401 ---
     private UserEntity loadCurrentUser(Authentication auth) {
         String email = auth.getName();
         return userRepository.findByEmail(email)

@@ -8,6 +8,8 @@ import com.example.MyBookshelf.status.ReadingStatus;
 import com.example.MyBookshelf.entity.UserBookStatusEntity;
 import com.example.MyBookshelf.util.IteratorUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +43,26 @@ public class BookService {
             filtered.add(it.next());
         }
         return filtered;
+    }
+
+    public List<BookEntity> findTopReviewed(int n) {
+        PageRequest page = PageRequest.of(0, n, Sort.by("reviewCount").descending());
+        return bookRepository.findAllBy(page).getContent();
+    }
+
+    public List<BookEntity> findLeastReviewed(int n) {
+        PageRequest page = PageRequest.of(0, n, Sort.by("reviewCount").ascending());
+        return bookRepository.findAllBy(page).getContent();
+    }
+
+    public List<BookEntity> findTopRated(int n) {
+        PageRequest page = PageRequest.of(0, n, Sort.by("rating").descending());
+        return bookRepository.findAllBy(page).getContent();
+    }
+
+    public List<BookEntity> findLeastRated(int n) {
+        PageRequest page = PageRequest.of(0, n, Sort.by("rating").ascending());
+        return bookRepository.findAllBy(page).getContent();
     }
 
     public List<BookEntity> getBooksByStatusForUser(UserEntity user, String statusStr) {
