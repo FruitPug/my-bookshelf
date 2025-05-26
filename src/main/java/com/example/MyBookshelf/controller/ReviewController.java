@@ -52,7 +52,7 @@ public class ReviewController {
             reviewEntity.setBook(book);
             reviewEntity.setUser(user);
 
-            ReviewEntity saved = reviewService.addReview(bookId, reviewEntity);
+            ReviewEntity saved = reviewService.addReview(bookId, reviewEntity, user);
             ReviewResponseDto response = ReviewMapper.toResponseDto(saved);
             return ResponseEntity.ok(response);
         } catch (IllegalStateException e) {

@@ -6,6 +6,7 @@ import com.example.MyBookshelf.entity.UserEntity;
 import com.example.MyBookshelf.repository.BookRepository;
 import com.example.MyBookshelf.repository.ReviewRepository;
 import com.example.MyBookshelf.repository.UserRepository;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,13 +30,12 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReviewEntity addReview(Long bookId, ReviewEntity reviewEntity) {
+    @CacheEvict(value = "recommendations", key = "#user.id")
+    public ReviewEntity addReview(Long bookId, ReviewEntity reviewEntity, UserEntity user) {
         reviewEntity.setBook(bookRepository.findById(bookId).get());
 
         BookEntity book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("Book not found: " + bookId));
-
-        UserEntity user = reviewEntity.getUser();
 
         reviewRepository.findByUserAndBook(user, book)
                 .ifPresent(r -> {
