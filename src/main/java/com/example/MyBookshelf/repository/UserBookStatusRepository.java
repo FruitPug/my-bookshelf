@@ -4,6 +4,8 @@ import com.example.MyBookshelf.status.ReadingStatus;
 import com.example.MyBookshelf.entity.UserBookStatusEntity;
 import com.example.MyBookshelf.entity.UserEntity;
 import com.example.MyBookshelf.entity.BookEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,7 +17,7 @@ public interface UserBookStatusRepository extends JpaRepository<UserBookStatusEn
 
     Optional<UserBookStatusEntity> findByUserAndBook(UserEntity user, BookEntity book);
 
-    List<UserBookStatusEntity> findByUser(UserEntity user);
+    Page<UserBookStatusEntity> findByUser(UserEntity user, Pageable pageable);
 
     List<UserBookStatusEntity> findByUserAndStatus(UserEntity user, ReadingStatus status);
 }

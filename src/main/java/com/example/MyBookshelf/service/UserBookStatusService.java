@@ -5,6 +5,8 @@ import com.example.MyBookshelf.repository.UserBookStatusRepository;
 import com.example.MyBookshelf.status.ReadingStatus;
 import com.example.MyBookshelf.entity.UserBookStatusEntity;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +28,7 @@ public class UserBookStatusService {
         return repo.save(ubs);
     }
 
-    public List<UserBookStatusEntity> getStatusesForUser(UserEntity user) {
-        return repo.findByUser(user);
+    public Page<UserBookStatusEntity> getStatusesForUser(UserEntity user, Pageable pageable) {
+        return repo.findByUser(user, pageable);
     }
 }

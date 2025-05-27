@@ -20,12 +20,12 @@ public class RecommendationService {
     @Cacheable(value = "recommendations", key = "#user.id")
     public Page<BookEntity> recommendForUser(UserEntity user, Pageable pageable) {
         // 1) Exclude books already seen
-        Set<BookEntity> excluded = statusRepo.findByUser(user).stream()
+        Set<BookEntity> excluded = statusRepo.findByUser(user, pageable).stream()
                 .map(UserBookStatusEntity::getBook)
                 .collect(Collectors.toSet());
 
         // 2) Determine top genre
-        String topGenre = statusRepo.findByUser(user).stream()
+        String topGenre = statusRepo.findByUser(user, pageable).stream()
                 .map(ubs -> ubs.getBook().getGenre())
                 .collect(Collectors.groupingBy(g -> g, Collectors.counting()))
                 .entrySet().stream()
@@ -33,12 +33,12 @@ public class RecommendationService {
                 .map(Map.Entry::getKey)
                 .orElse(null);
 
-        // 3) Build candidates
+        // 3) Build candidates, unwrapping the futures
         List<BookEntity> candidates;
         if (topGenre == null) {
-            candidates = bookService.findTopReviewed(50);
+            candidates = bookService.findTopReviewed(50).join().toList();
         } else {
-            candidates = bookService.getBooksByGenre(topGenre).stream()
+            candidates = bookService.getBooksByGenre(topGenre, pageable).join().stream()
                     .sorted(Comparator.comparingInt(BookEntity::getReviewCount).reversed())
                     .limit(50)
                     .collect(Collectors.toList());
@@ -52,8 +52,11 @@ public class RecommendationService {
         // 5) Now apply paging
         int start = (int) pageable.getOffset();
         int end = Math.min(start + pageable.getPageSize(), filtered.size());
-        List<BookEntity> pageContent = start > end ? Collections.emptyList() : filtered.subList(start, end);
+        List<BookEntity> pageContent = start > end
+                ? Collections.emptyList()
+                : filtered.subList(start, end);
 
         return new PageImpl<>(pageContent, pageable, filtered.size());
     }
+
 }

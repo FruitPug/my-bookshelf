@@ -24,8 +24,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @RestController
 @RequestMapping("/books")
@@ -37,111 +37,159 @@ public class BookController {
     private final UserBookStatusRepository statusRepository;
     private final UserBookStatusService statusService;
     private final BookRepository bookRepository;
+    private final Executor taskExecutor;
 
     @GetMapping
-    public Page<BookResponseDto> getAllBooks(Pageable pageable, Authentication auth) {
+    public CompletableFuture<Page<BookResponseDto>> getAllBooksAsync(
+            Pageable pageable,
+            Authentication auth
+    ) {
         UserEntity user = loadCurrentUser(auth);
+
         return bookService.getAllBooks(pageable)
-                .map(book -> {
-                    ReadingStatus status = statusRepository
-                            .findByUserAndBook(user, book)
-                            .map(UserBookStatusEntity::getStatus)
-                            .orElse(null);
-                    return BookMapper.toResponseDto(book, status);
-                });
+                .thenApplyAsync(page ->
+                        page.map(book -> {
+                            ReadingStatus status = statusRepository
+                                    .findByUserAndBook(user, book)
+                                    .map(UserBookStatusEntity::getStatus)
+                                    .orElse(null);
+                            return BookMapper.toResponseDto(book, status);
+                        }), taskExecutor);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BookResponseDto> getBookById(
+    public CompletableFuture<ResponseEntity<BookResponseDto>> getBookByIdAsync(
             @PathVariable Long id,
             Authentication auth
     ) {
-        UserEntity user = loadCurrentUser(auth);
+        // load the user now, outside the future
+        UserEntity user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
         return bookService.getBookById(id)
-                .map(book -> {
-                    ReadingStatus status = statusRepository
-                            .findByUserAndBook(user, book)
-                            .map(UserBookStatusEntity::getStatus)
-                            .orElse(null);
-                    return BookMapper.toResponseDto(book, status);
-                })
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .thenApplyAsync(optBook -> optBook
+                                .map(book -> {
+                                    ReadingStatus status = statusRepository
+                                            .findByUserAndBook(user, book)
+                                            .map(UserBookStatusEntity::getStatus)
+                                            .orElse(null);
+                                    return BookMapper.toResponseDto(book, status);
+                                })
+                                .map(ResponseEntity::ok)
+                                .orElse(ResponseEntity.notFound().build()),
+                        taskExecutor
+                );
     }
 
     @GetMapping("/top-reviewed")
-    public List<BookResponseDto> topReviewed(@RequestParam(defaultValue = "5") int n) {
-        return bookService.findTopReviewed(n).stream()
-                .map(b -> BookMapper.toResponseDto(b, /* userStatus */ null))
-                .toList();
+    public CompletableFuture<Page<BookResponseDto>> topReviewedAsync(
+            @RequestParam(defaultValue = "5") int n
+            ) {
+        return bookService.findTopReviewed(n)
+                .thenApplyAsync(bookPage ->
+                                bookPage.map(book ->
+                                        BookMapper.toResponseDto(book, null)
+                                ),
+                        taskExecutor
+                );
     }
 
     @GetMapping("/least-reviewed")
-    public List<BookResponseDto> leastReviewed(@RequestParam(defaultValue = "5") int n) {
-        return bookService.findLeastReviewed(n).stream()
-                .map(b -> BookMapper.toResponseDto(b, /* userStatus */ null))
-                .toList();
+    public CompletableFuture<Page<BookResponseDto>> leastReviewedAsync(
+            @RequestParam(defaultValue = "5") int n
+            ) {
+        return bookService.findLeastReviewed(n)
+                .thenApplyAsync(bookPage ->
+                                bookPage.map(book ->
+                                        BookMapper.toResponseDto(book, null)
+                                ),
+                        taskExecutor
+                );
     }
 
     @GetMapping("/top-rated")
-    public List<BookResponseDto> topRated(@RequestParam(defaultValue = "5") int n) {
-        return bookService.findTopRated(n).stream()
-                .map(b -> BookMapper.toResponseDto(b, /* userStatus */ null))
-                .toList();
+    public CompletableFuture<Page<BookResponseDto>> topRatedAsync(
+            @RequestParam(defaultValue = "5") int n
+            ) {
+        return bookService.findTopRated(n)
+                .thenApplyAsync(bookPage ->
+                                bookPage.map(book ->
+                                        BookMapper.toResponseDto(book, null)
+                                ),
+                        taskExecutor
+                );
     }
 
-    @GetMapping("/least-rared")
-    public List<BookResponseDto> leastRared(@RequestParam(defaultValue = "5") int n) {
-        return bookService.findLeastRated(n).stream()
-                .map(b -> BookMapper.toResponseDto(b, /* userStatus */ null))
-                .toList();
+    @GetMapping("/least-rated")
+    public CompletableFuture<Page<BookResponseDto>> leastRatedAsync(
+            @RequestParam(defaultValue = "5") int n
+            ) {
+        return bookService.findLeastRated(n)
+                .thenApplyAsync(bookPage ->
+                                bookPage.map(book ->
+                                        BookMapper.toResponseDto(book, null)
+                                ),
+                        taskExecutor
+                );
     }
 
     @GetMapping("/filter/genre/{genre}")
-    public List<BookResponseDto> getByGenre(
+    public CompletableFuture<Page<BookResponseDto>> getByGenreAsync(
             @PathVariable String genre,
+            Pageable pageable,
             Authentication auth
     ) {
-        UserEntity user = loadCurrentUser(auth);
+        UserEntity user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        return bookService.getBooksByGenre(genre).stream()
-                .map(book -> {
-                    ReadingStatus status = statusRepository
-                            .findByUserAndBook(user, book)
-                            .map(UserBookStatusEntity::getStatus)
-                            .orElse(null);
-                    return BookMapper.toResponseDto(book, status);
-                })
-                .toList();
+        return bookService.getBooksByGenre(genre, pageable)  // CF<Page<BookEntity>>
+                .thenApplyAsync(bookPage ->
+                                bookPage.map(book -> {
+                                    ReadingStatus status = statusRepository
+                                            .findByUserAndBook(user, book)
+                                            .map(UserBookStatusEntity::getStatus)
+                                            .orElse(null);
+                                    return BookMapper.toResponseDto(book, status);
+                                }),
+                        taskExecutor
+                );
     }
 
     @GetMapping("/filter/status/{status}")
-    public List<BookResponseDto> getByStatus(
+    public CompletableFuture<Page<BookResponseDto>> getByStatusAsync(
             @PathVariable String status,
+            Pageable pageable,
             Authentication auth
     ) {
-        UserEntity user = loadCurrentUser(auth);
+        UserEntity user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        List<BookEntity> books = bookService.getBooksByStatusForUser(user, status);
-
-        return books.stream()
-                .map(book -> BookMapper.toResponseDto(book, ReadingStatus.valueOf(status.toUpperCase())))
-                .toList();
+        return bookService.getBooksByStatusForUser(user, status, pageable)  // CF<List<BookEntity>>
+                .thenApplyAsync(bookPage ->
+                                bookPage.map(book -> {
+                                    ReadingStatus bookStatus = statusRepository
+                                            .findByUserAndBook(user, book)
+                                            .map(UserBookStatusEntity::getStatus)
+                                            .orElse(null);
+                                    return BookMapper.toResponseDto(book, bookStatus);
+                                }),
+                        taskExecutor
+                );
     }
 
     @GetMapping("/status")
-    public ResponseEntity<List<UserBookStatusDto>> listStatuses(Authentication auth) {
-        Optional<UserEntity> optUser = userRepository.findByEmail(auth.getName());
-        if (optUser.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        UserEntity user = optUser.get();
-        List<UserBookStatusEntity> list = statusService.getStatusesForUser(user);
-        List<UserBookStatusDto> dtos = list.stream()
-                .map(UserBookStatusMapper::toDto)
-                .toList();
-        return ResponseEntity.ok(dtos);
+    public ResponseEntity<Page<UserBookStatusDto>> listStatuses(
+            Authentication auth,
+            Pageable pageable
+    ) {
+        UserEntity user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Page<UserBookStatusEntity> page = statusService.getStatusesForUser(user, pageable);
+
+        Page<UserBookStatusDto> dtoPage = page.map(UserBookStatusMapper::toDto);
+
+        return ResponseEntity.ok(dtoPage);
     }
 
     @PostMapping
@@ -157,17 +205,11 @@ public class BookController {
             @RequestBody BookStatusDto statusDto,
             Authentication auth
     ) {
-        Optional<UserEntity> optUser = userRepository.findByEmail(auth.getName());
-        if (optUser.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        UserEntity user = optUser.get();
+        UserEntity user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        Optional<BookEntity> optBook = bookRepository.findById(bookId);
-        if (optBook.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        BookEntity book = optBook.get();
+        BookEntity book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
 
         UserBookStatusEntity ubs = statusService.setStatus(user, book, statusDto.status());
         return ResponseEntity.ok(UserBookStatusMapper.toDto(ubs));

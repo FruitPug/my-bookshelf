@@ -6,19 +6,15 @@ import com.example.MyBookshelf.repository.BookRepository;
 import com.example.MyBookshelf.repository.UserBookStatusRepository;
 import com.example.MyBookshelf.status.ReadingStatus;
 import com.example.MyBookshelf.entity.UserBookStatusEntity;
-import com.example.MyBookshelf.util.IteratorUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -27,50 +23,85 @@ public class BookService {
     private final BookRepository bookRepository;
     private final UserBookStatusRepository statusRepository;
 
-    public Page<BookEntity> getAllBooks(Pageable pageable) {
-        return bookRepository.findAll(pageable);
+    @Async("taskExecutor")
+    @Transactional(readOnly = true)
+    public CompletableFuture<Page<BookEntity>> getAllBooks(Pageable pageable) {
+        Page<BookEntity> page = bookRepository.findAllAsync(pageable);
+        return CompletableFuture.completedFuture(page);
     }
 
-    public Optional<BookEntity> getBookById(Long id) {
-        return bookRepository.findById(id);
+    @Async("taskExecutor")
+    public CompletableFuture<Optional<BookEntity>> getBookById(Long id) {
+        return CompletableFuture.completedFuture(bookRepository.findByIdAsync(id));
     }
 
-    public List<BookEntity> getBooksByGenre(String genre) {
-        List<BookEntity> all = bookRepository.findAll();
-        Iterator<BookEntity> it = IteratorUtils.filterIterator(all, b -> genre.equalsIgnoreCase(b.getGenre()));
-        List<BookEntity> filtered = new ArrayList<>();
-        while (it.hasNext()) {
-            filtered.add(it.next());
-        }
-        return filtered;
+    @Async("taskExecutor")
+    public CompletableFuture<Page<BookEntity>> getBooksByGenre(String genre, Pageable pageable) {
+        Page<BookEntity> page = bookRepository.findAll(pageable);
+
+        List<BookEntity> filtered = page.getContent().stream()
+                .filter(b -> genre.equalsIgnoreCase(b.getGenre()))
+                .toList();
+
+        Page<BookEntity> result = new PageImpl<>(filtered, pageable, filtered.size());
+
+        return CompletableFuture.completedFuture(result);
     }
 
-    public List<BookEntity> findTopReviewed(int n) {
-        PageRequest page = PageRequest.of(0, n, Sort.by("reviewCount").descending());
-        return bookRepository.findAllBy(page).getContent();
-    }
-
-    public List<BookEntity> findLeastReviewed(int n) {
-        PageRequest page = PageRequest.of(0, n, Sort.by("reviewCount").ascending());
-        return bookRepository.findAllBy(page).getContent();
-    }
-
-    public List<BookEntity> findTopRated(int n) {
-        PageRequest page = PageRequest.of(0, n, Sort.by("rating").descending());
-        return bookRepository.findAllBy(page).getContent();
-    }
-
-    public List<BookEntity> findLeastRated(int n) {
-        PageRequest page = PageRequest.of(0, n, Sort.by("rating").ascending());
-        return bookRepository.findAllBy(page).getContent();
-    }
-
-    public List<BookEntity> getBooksByStatusForUser(UserEntity user, String statusStr) {
+    @Async("taskExecutor")
+    public CompletableFuture<Page<BookEntity>> getBooksByStatusForUser(
+            UserEntity user,
+            String statusStr,
+            Pageable pageable
+    ) {
         ReadingStatus status = ReadingStatus.valueOf(statusStr.toUpperCase());
-        List<UserBookStatusEntity> statuses = statusRepository.findByUserAndStatus(user, status);
-        return statuses.stream()
-                .map(UserBookStatusEntity::getBook)
-                .collect(Collectors.toList());
+
+        List<UserBookStatusEntity> statuses =
+                statusRepository.findByUserAndStatus(user, status);
+
+        List<Long> bookIds = statuses.stream()
+                .map(ubs -> ubs.getBook().getId())
+                .toList();
+
+        if (bookIds.isEmpty()) {
+            Page<BookEntity> empty = new PageImpl<>(List.of(), pageable, 0);
+            return CompletableFuture.completedFuture(empty);
+        }
+
+        List<BookEntity> allBooks = bookRepository.findAllWithReviewsByIdIn(bookIds);
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), allBooks.size());
+        List<BookEntity> pageContent = start > end ? List.of() : allBooks.subList(start, end);
+
+        Page<BookEntity> page = new PageImpl<>(pageContent, pageable, allBooks.size());
+
+        return CompletableFuture.completedFuture(page);
+    }
+
+
+    @Async("taskExecutor")
+    public CompletableFuture<Page<BookEntity>> findTopReviewed(int n) {
+        PageRequest page = PageRequest.of(0, n, Sort.by("reviewCount").descending());
+        return CompletableFuture.completedFuture(bookRepository.findAllBy(page));
+    }
+
+    @Async("taskExecutor")
+    public CompletableFuture<Page<BookEntity>> findLeastReviewed(int n) {
+        PageRequest page = PageRequest.of(0, n, Sort.by("reviewCount").ascending());
+        return CompletableFuture.completedFuture(bookRepository.findAllBy(page));
+    }
+
+    @Async("taskExecutor")
+    public CompletableFuture<Page<BookEntity>> findTopRated(int n) {
+        PageRequest page = PageRequest.of(0, n, Sort.by("rating").descending());
+        return CompletableFuture.completedFuture(bookRepository.findAllBy(page));
+    }
+
+    @Async("taskExecutor")
+    public CompletableFuture<Page<BookEntity>> findLeastRated(int n) {
+        PageRequest page = PageRequest.of(0, n, Sort.by("rating").ascending());
+        return CompletableFuture.completedFuture(bookRepository.findAllBy(page));
     }
 
     public BookEntity saveBook(BookEntity bookEntity) {
