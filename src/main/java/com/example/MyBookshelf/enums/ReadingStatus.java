@@ -1,4 +1,4 @@
-package com.example.MyBookshelf.status;
+package com.example.MyBookshelf.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;

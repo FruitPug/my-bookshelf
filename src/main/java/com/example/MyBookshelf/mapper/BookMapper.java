@@ -3,7 +3,7 @@ package com.example.MyBookshelf.mapper;
 import com.example.MyBookshelf.dto.request.BookCreateDto;
 import com.example.MyBookshelf.dto.responce.BookResponseDto;
 import com.example.MyBookshelf.entity.BookEntity;
-import com.example.MyBookshelf.status.ReadingStatus;
+import com.example.MyBookshelf.enums.ReadingStatus;
 
 import java.util.List;
 

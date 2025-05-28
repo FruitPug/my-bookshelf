@@ -8,13 +8,14 @@ import com.example.MyBookshelf.entity.BookEntity;
 import com.example.MyBookshelf.mapper.UserBookStatusMapper;
 import com.example.MyBookshelf.repository.BookRepository;
 import com.example.MyBookshelf.service.UserBookStatusService;
-import com.example.MyBookshelf.status.ReadingStatus;
+import com.example.MyBookshelf.enums.ReadingStatus;
 import com.example.MyBookshelf.entity.UserBookStatusEntity;
 import com.example.MyBookshelf.entity.UserEntity;
 import com.example.MyBookshelf.mapper.BookMapper;
 import com.example.MyBookshelf.repository.UserBookStatusRepository;
 import com.example.MyBookshelf.repository.UserRepository;
 import com.example.MyBookshelf.service.BookService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -193,7 +194,7 @@ public class BookController {
     }
 
     @PostMapping
-    public ResponseEntity<BookResponseDto> addBook(@RequestBody BookCreateDto dto) {
+    public ResponseEntity<BookResponseDto> addBook(@Valid @RequestBody BookCreateDto dto) {
         BookEntity saved = bookService.saveBook(BookMapper.fromCreateDto(dto));
         // no userStatus on creation
         return ResponseEntity.ok(BookMapper.toResponseDto(saved, null));
@@ -202,7 +203,7 @@ public class BookController {
     @PostMapping("/status/{bookId}")
     public ResponseEntity<UserBookStatusDto> setStatus(
             @PathVariable Long bookId,
-            @RequestBody BookStatusDto statusDto,
+            @Valid @RequestBody BookStatusDto statusDto,
             Authentication auth
     ) {
         UserEntity user = userRepository.findByEmail(auth.getName())
@@ -215,7 +216,6 @@ public class BookController {
         return ResponseEntity.ok(UserBookStatusMapper.toDto(ubs));
     }
 
-    /** Delete a book (admin use) */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
         bookService.deleteBook(id);

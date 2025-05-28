@@ -1,6 +1,6 @@
 package com.example.MyBookshelf.entity;
 
-import com.example.MyBookshelf.status.ReadingStatus;
+import com.example.MyBookshelf.enums.ReadingStatus;
 import jakarta.persistence.*;
 import lombok.*;
 

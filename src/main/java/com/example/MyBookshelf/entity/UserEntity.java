@@ -1,7 +1,11 @@
 package com.example.MyBookshelf.entity;
 
+import com.example.MyBookshelf.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -21,4 +25,11 @@ public class UserEntity {
 
     @Column(nullable = false)
     private String passwordHash;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserBookStatusEntity> statusEntities = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable=false)
+    private Role role;
 }

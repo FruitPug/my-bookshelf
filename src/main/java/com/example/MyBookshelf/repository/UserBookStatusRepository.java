@@ -1,6 +1,6 @@
 package com.example.MyBookshelf.repository;
 
-import com.example.MyBookshelf.status.ReadingStatus;
+import com.example.MyBookshelf.enums.ReadingStatus;
 import com.example.MyBookshelf.entity.UserBookStatusEntity;
 import com.example.MyBookshelf.entity.UserEntity;
 import com.example.MyBookshelf.entity.BookEntity;
@@ -20,4 +20,7 @@ public interface UserBookStatusRepository extends JpaRepository<UserBookStatusEn
     Page<UserBookStatusEntity> findByUser(UserEntity user, Pageable pageable);
 
     List<UserBookStatusEntity> findByUserAndStatus(UserEntity user, ReadingStatus status);
+
+    void deleteByUser(UserEntity user);
+
 }

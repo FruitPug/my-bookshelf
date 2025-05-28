@@ -4,7 +4,7 @@ import com.example.MyBookshelf.entity.BookEntity;
 import com.example.MyBookshelf.entity.UserEntity;
 import com.example.MyBookshelf.repository.BookRepository;
 import com.example.MyBookshelf.repository.UserBookStatusRepository;
-import com.example.MyBookshelf.status.ReadingStatus;
+import com.example.MyBookshelf.enums.ReadingStatus;
 import com.example.MyBookshelf.entity.UserBookStatusEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;

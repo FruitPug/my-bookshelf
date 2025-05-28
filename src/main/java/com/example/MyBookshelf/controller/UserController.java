@@ -5,6 +5,7 @@ import com.example.MyBookshelf.dto.responce.UserResponseDto;
 import com.example.MyBookshelf.entity.UserEntity;
 import com.example.MyBookshelf.mapper.UserMapper;
 import com.example.MyBookshelf.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,7 +48,7 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserResponseDto> register(@RequestBody UserCreateDto req) {
+    public ResponseEntity<UserResponseDto> register(@Valid @RequestBody UserCreateDto req) {
         if (userService.existsByEmail(req.getEmail())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }

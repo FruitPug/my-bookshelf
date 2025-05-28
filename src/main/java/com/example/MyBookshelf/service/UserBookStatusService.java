@@ -2,7 +2,7 @@ package com.example.MyBookshelf.service;
 
 import com.example.MyBookshelf.entity.*;
 import com.example.MyBookshelf.repository.UserBookStatusRepository;
-import com.example.MyBookshelf.status.ReadingStatus;
+import com.example.MyBookshelf.enums.ReadingStatus;
 import com.example.MyBookshelf.entity.UserBookStatusEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

@@ -8,6 +8,7 @@ import com.example.MyBookshelf.mapper.ReviewMapper;
 import com.example.MyBookshelf.repository.BookRepository;
 import com.example.MyBookshelf.repository.UserRepository;
 import com.example.MyBookshelf.service.ReviewService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -37,7 +38,7 @@ public class ReviewController {
     @PostMapping("/book/{bookId}")
     public ResponseEntity<ReviewResponseDto> addReview(
             @PathVariable Long bookId,
-            @RequestBody ReviewCreateDto dto,
+            @Valid @RequestBody ReviewCreateDto dto,
             Authentication authentication
     ) {
         try {
