@@ -31,6 +31,7 @@ public class BookEntity {
     private double rating;
     private int reviewCount;
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReviewEntity> reviewEntities = new ArrayList<>();
 

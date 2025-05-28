@@ -199,7 +199,7 @@ public class BookController {
         return ResponseEntity.ok(BookMapper.toResponseDto(saved, null));
     }
 
-    @PostMapping("/{bookId}/status")
+    @PostMapping("/status/{bookId}")
     public ResponseEntity<UserBookStatusDto> setStatus(
             @PathVariable Long bookId,
             @RequestBody BookStatusDto statusDto,
