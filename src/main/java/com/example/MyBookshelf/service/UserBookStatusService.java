@@ -1,10 +1,12 @@
 package com.example.MyBookshelf.service;
 
 import com.example.MyBookshelf.entity.*;
+import com.example.MyBookshelf.event.BookFinishedEvent;
 import com.example.MyBookshelf.repository.UserBookStatusRepository;
 import com.example.MyBookshelf.enums.ReadingStatus;
 import com.example.MyBookshelf.entity.UserBookStatusEntity;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -14,16 +16,20 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserBookStatusService {
     private final UserBookStatusRepository repo;
+    private final ApplicationEventPublisher publisher;
 
     @Transactional
     public UserBookStatusEntity setStatus(UserEntity user, BookEntity book, ReadingStatus status) {
         UserBookStatusEntity ubs = repo.findByUserAndBook(user, book)
-                .orElseGet(() -> UserBookStatusEntity.builder()
-                        .user(user)
-                        .book(book)
-                        .build());
+                .orElseGet(() -> UserBookStatusEntity.builder().user(user).book(book).build());
+
         ubs.setStatus(status);
-        return repo.save(ubs);
+        UserBookStatusEntity saved = repo.save(ubs);
+
+        if (status == ReadingStatus.READ) {
+            publisher.publishEvent(new BookFinishedEvent(this, user, book));
+        }
+        return saved;
     }
 
     public Page<UserBookStatusEntity> getStatusesForUser(UserEntity user, Pageable pageable) {

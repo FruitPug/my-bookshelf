@@ -26,6 +26,7 @@ public class UserEntity {
     @Column(nullable = false)
     private String passwordHash;
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserBookStatusEntity> statusEntities = new ArrayList<>();
 
