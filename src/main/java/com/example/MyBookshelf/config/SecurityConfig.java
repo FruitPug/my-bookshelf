@@ -1,37 +1,35 @@
 package com.example.MyBookshelf.config;
 
+import com.example.MyBookshelf.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
-import static org.springframework.security.config.Customizer.withDefaults;
-import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final UserDetailsService customUserDetailsService;
+    private final CustomUserDetailsService userDetailsService;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(sm -> sm.sessionCreationPolicy(STATELESS))
+                // allow everyone to log in and register
                 .authorizeHttpRequests(auth -> auth
-                        // open registration
-                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
-
-                        // admin‐only management
+                        .requestMatchers("/auth/login", "/auth/logout").permitAll()
+                        // admin‐only endpoints as before…
                         .requestMatchers(HttpMethod.POST, "/books").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/reviews").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/users").hasRole("ADMIN")
@@ -41,14 +39,20 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/books/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/reviews/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/users/**").hasRole("ADMIN")
-
-                        // everything else authenticated
                         .anyRequest().authenticated()
                 )
-                .httpBasic(withDefaults())
-                .userDetailsService(customUserDetailsService);
+                .formLogin(AbstractHttpConfigurer::disable)
+                .sessionManagement(sm -> sm
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                )
+                .userDetailsService(userDetailsService);
 
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
+        return cfg.getAuthenticationManager();
     }
 
     @Bean
