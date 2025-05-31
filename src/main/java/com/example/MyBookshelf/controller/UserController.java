@@ -21,7 +21,6 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
-    private final PasswordEncoder passwordEncoder;
 
     @GetMapping
     public List<UserResponseDto> getAllUsers() {
@@ -45,18 +44,6 @@ public class UserController {
                 .map(UserMapper::toResponseDto)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
-    }
-
-    @PostMapping
-    public ResponseEntity<UserResponseDto> register(@Valid @RequestBody UserCreateDto req) {
-        if (userService.existsByEmail(req.getEmail())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-        UserEntity saved = userService.save(
-                UserMapper.fromCreateDto(req, passwordEncoder)
-        );
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(UserMapper.toResponseDto(saved));
     }
 
     @DeleteMapping("/{id}")
