@@ -1,16 +1,12 @@
 package com.example.MyBookshelf.controller;
 
-import com.example.MyBookshelf.dto.request.UserCreateDto;
 import com.example.MyBookshelf.dto.responce.UserResponseDto;
-import com.example.MyBookshelf.entity.UserEntity;
 import com.example.MyBookshelf.mapper.UserMapper;
 import com.example.MyBookshelf.service.UserService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
