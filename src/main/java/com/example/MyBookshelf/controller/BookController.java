@@ -6,15 +6,13 @@ import com.example.MyBookshelf.dto.request.BookCreateDto;
 import com.example.MyBookshelf.dto.responce.BookResponseDto;
 import com.example.MyBookshelf.entity.BookEntity;
 import com.example.MyBookshelf.mapper.UserBookStatusMapper;
-import com.example.MyBookshelf.repository.BookRepository;
 import com.example.MyBookshelf.service.UserBookStatusService;
 import com.example.MyBookshelf.enums.ReadingStatus;
 import com.example.MyBookshelf.entity.UserBookStatusEntity;
 import com.example.MyBookshelf.entity.UserEntity;
 import com.example.MyBookshelf.mapper.BookMapper;
-import com.example.MyBookshelf.repository.UserBookStatusRepository;
-import com.example.MyBookshelf.repository.UserRepository;
 import com.example.MyBookshelf.service.BookService;
+import com.example.MyBookshelf.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -34,10 +32,8 @@ import java.util.concurrent.Executor;
 public class BookController {
 
     private final BookService bookService;
-    private final UserRepository userRepository;
-    private final UserBookStatusRepository statusRepository;
+    private final UserService userService;
     private final UserBookStatusService statusService;
-    private final BookRepository bookRepository;
     private final Executor taskExecutor;
 
     @GetMapping
@@ -50,7 +46,7 @@ public class BookController {
         return bookService.getAllBooks(pageable)
                 .thenApplyAsync(page ->
                         page.map(book -> {
-                            ReadingStatus status = statusRepository
+                            ReadingStatus status = statusService
                                     .findByUserAndBook(user, book)
                                     .map(UserBookStatusEntity::getStatus)
                                     .orElse(null);
@@ -64,13 +60,13 @@ public class BookController {
             Authentication auth
     ) {
         // load the user now, outside the future
-        UserEntity user = userRepository.findByEmail(auth.getName())
+        UserEntity user = userService.findByEmail(auth.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
         return bookService.getBookById(id)
                 .thenApplyAsync(optBook -> optBook
                                 .map(book -> {
-                                    ReadingStatus status = statusRepository
+                                    ReadingStatus status = statusService
                                             .findByUserAndBook(user, book)
                                             .map(UserBookStatusEntity::getStatus)
                                             .orElse(null);
@@ -140,13 +136,13 @@ public class BookController {
             Pageable pageable,
             Authentication auth
     ) {
-        UserEntity user = userRepository.findByEmail(auth.getName())
+        UserEntity user = userService.findByEmail(auth.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
         return bookService.getBooksByGenre(genre, pageable)  // CF<Page<BookEntity>>
                 .thenApplyAsync(bookPage ->
                                 bookPage.map(book -> {
-                                    ReadingStatus status = statusRepository
+                                    ReadingStatus status = statusService
                                             .findByUserAndBook(user, book)
                                             .map(UserBookStatusEntity::getStatus)
                                             .orElse(null);
@@ -162,13 +158,13 @@ public class BookController {
             Pageable pageable,
             Authentication auth
     ) {
-        UserEntity user = userRepository.findByEmail(auth.getName())
+        UserEntity user = userService.findByEmail(auth.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
         return bookService.getBooksByStatusForUser(user, status, pageable)  // CF<List<BookEntity>>
                 .thenApplyAsync(bookPage ->
                                 bookPage.map(book -> {
-                                    ReadingStatus bookStatus = statusRepository
+                                    ReadingStatus bookStatus = statusService
                                             .findByUserAndBook(user, book)
                                             .map(UserBookStatusEntity::getStatus)
                                             .orElse(null);
@@ -183,7 +179,7 @@ public class BookController {
             Authentication auth,
             Pageable pageable
     ) {
-        UserEntity user = userRepository.findByEmail(auth.getName())
+        UserEntity user = userService.findByEmail(auth.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         Page<UserBookStatusEntity> page = statusService.getStatusesForUser(user, pageable);
@@ -206,10 +202,10 @@ public class BookController {
             @Valid @RequestBody BookStatusDto statusDto,
             Authentication auth
     ) {
-        UserEntity user = userRepository.findByEmail(auth.getName())
+        UserEntity user = userService.findByEmail(auth.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        BookEntity book = bookRepository.findById(bookId)
+        BookEntity book = bookService.findById(bookId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
 
         UserBookStatusEntity ubs = statusService.setStatus(user, book, statusDto.status());
@@ -224,7 +220,7 @@ public class BookController {
 
     private UserEntity loadCurrentUser(Authentication auth) {
         String email = auth.getName();
-        return userRepository.findByEmail(email)
+        return userService.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED, "User not found"
                 ));

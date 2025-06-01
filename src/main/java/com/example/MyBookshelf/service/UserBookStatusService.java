@@ -12,6 +12,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class UserBookStatusService {
@@ -34,5 +36,9 @@ public class UserBookStatusService {
 
     public Page<UserBookStatusEntity> getStatusesForUser(UserEntity user, Pageable pageable) {
         return repo.findByUser(user, pageable);
+    }
+
+    public Optional<UserBookStatusEntity> findByUserAndBook(UserEntity user, BookEntity book){
+        return repo.findByUserAndBook(user, book);
     }
 }

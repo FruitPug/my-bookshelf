@@ -5,9 +5,9 @@ import com.example.MyBookshelf.dto.responce.ReviewResponseDto;
 import com.example.MyBookshelf.entity.ReviewEntity;
 import com.example.MyBookshelf.entity.UserEntity;
 import com.example.MyBookshelf.mapper.ReviewMapper;
-import com.example.MyBookshelf.repository.BookRepository;
-import com.example.MyBookshelf.repository.UserRepository;
+import com.example.MyBookshelf.service.BookService;
 import com.example.MyBookshelf.service.ReviewService;
+import com.example.MyBookshelf.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,8 +24,8 @@ import java.util.List;
 public class ReviewController {
 
     private final ReviewService reviewService;
-    private final BookRepository bookRepository;
-    private final UserRepository userRepository;
+    private final BookService bookService;
+    private final UserService userService;
 
     @GetMapping
     public List<ReviewResponseDto> getUserReviews(Authentication authentication) {
@@ -42,11 +42,11 @@ public class ReviewController {
             Authentication authentication
     ) {
         try {
-            var book = bookRepository.findById(bookId)
+            var book = bookService.findById(bookId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
 
             String email = authentication.getName();
-            UserEntity user = userRepository.findByEmail(email)
+            UserEntity user = userService.findByEmail(email)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
             ReviewEntity reviewEntity = ReviewMapper.fromRequestDto(dto);

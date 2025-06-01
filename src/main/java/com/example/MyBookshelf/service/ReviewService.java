@@ -6,6 +6,7 @@ import com.example.MyBookshelf.entity.UserEntity;
 import com.example.MyBookshelf.repository.BookRepository;
 import com.example.MyBookshelf.repository.ReviewRepository;
 import com.example.MyBookshelf.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +34,11 @@ public class ReviewService {
     @Transactional
     @CacheEvict(value = "recommendations", key = "#user.id")
     public ReviewEntity addReview(Long bookId, ReviewEntity reviewEntity, UserEntity user) {
-        reviewEntity.setBook(bookRepository.findById(bookId).get());
+        Optional<BookEntity> optionalBook = bookRepository.findById(bookId);
+        if (optionalBook.isEmpty()) {
+            throw new EntityNotFoundException("Book not found: " + bookId);
+        }
+        reviewEntity.setBook(optionalBook.get());
 
         BookEntity book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("Book not found: " + bookId));

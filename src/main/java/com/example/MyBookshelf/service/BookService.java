@@ -108,6 +108,10 @@ public class BookService {
         return bookRepository.save(bookEntity);
     }
 
+    public Optional<BookEntity> findById(Long id) {
+        return bookRepository.findByIdAsync(id);
+    }
+
     public void deleteBook(Long id) {
         bookRepository.deleteById(id);
     }
