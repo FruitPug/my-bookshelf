@@ -1,5 +1,6 @@
 package com.example.MyBookshelf.service;
 
+import com.example.MyBookshelf.dto.responce.BookResponseDto;
 import com.example.MyBookshelf.entity.*;
 import com.example.MyBookshelf.repository.UserBookStatusRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +19,19 @@ public class RecommendationService {
     private final BookService bookService;
 
     @Cacheable(value = "recommendations", key = "#user.id")
-    public Page<BookEntity> recommendForUser(UserEntity user, Pageable pageable) {
-        // 1) Exclude books already seen
-        Set<BookEntity> excluded = statusRepository.findByUser(user, pageable).stream()
-                .map(UserBookStatusEntity::getBook)
+    public Page<BookResponseDto> recommendForUser(
+            UserEntity user,
+            Pageable pageable
+    ) {
+        int size = pageable.getPageSize();
+        Page<UserBookStatusEntity> statuses = statusRepository
+                .findByUser(user, pageable);
+
+        Set<Long> excludedIds = statuses.stream()
+                .map(ubs -> ubs.getBook().getId())
                 .collect(Collectors.toSet());
 
-        // 2) Determine top genre
-        String topGenre = statusRepository.findByUser(user, pageable).stream()
+        String topGenre = statuses.stream()
                 .map(ubs -> ubs.getBook().getGenre())
                 .collect(Collectors.groupingBy(g -> g, Collectors.counting()))
                 .entrySet().stream()
@@ -33,30 +39,21 @@ public class RecommendationService {
                 .map(Map.Entry::getKey)
                 .orElse(null);
 
-        // 3) Build candidates, unwrapping the futures
-        List<BookEntity> candidates;
+        Page<BookResponseDto> candidates;
         if (topGenre == null) {
-            candidates = bookService.findTopReviewed(50).join().toList();
+            candidates = bookService.findTopReviewedDto(size).join();
         } else {
-            candidates = bookService.getBooksByGenre(topGenre, pageable).join().stream()
-                    .sorted(Comparator.comparingInt(BookEntity::getReviewCount).reversed())
-                    .limit(50)
-                    .collect(Collectors.toList());
+            PageRequest candidatePage = PageRequest.of(0, size);
+            candidates = bookService.getBooksByGenreDto(topGenre, candidatePage).join();
         }
 
-        // 4) Filter out excluded and collect
-        List<BookEntity> filtered = candidates.stream()
-                .filter(b -> !excluded.contains(b))
-                .collect(Collectors.toList());
+        List<BookResponseDto> allCandidates = candidates.getContent();
 
-        // 5) Now apply paging
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), filtered.size());
-        List<BookEntity> pageContent = start > end
-                ? Collections.emptyList()
-                : filtered.subList(start, end);
+        List<BookResponseDto> filtered = allCandidates.stream()
+                .filter(dto -> !excludedIds.contains(dto.getId()))
+                .toList();
 
-        return new PageImpl<>(pageContent, pageable, filtered.size());
+        return new PageImpl<>(filtered, pageable, filtered.size());
     }
 
 }

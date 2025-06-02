@@ -9,7 +9,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -19,7 +18,11 @@ public interface UserBookStatusRepository extends JpaRepository<UserBookStatusEn
 
     Page<UserBookStatusEntity> findByUser(UserEntity user, Pageable pageable);
 
-    List<UserBookStatusEntity> findByUserAndStatus(UserEntity user, ReadingStatus status);
+    Page<UserBookStatusEntity> findByUserAndStatus(
+            UserEntity user,
+            ReadingStatus status,
+            Pageable pageable
+    );
 
     void deleteByUser(UserEntity user);
 

@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -29,14 +28,6 @@ public interface BookRepository extends JpaRepository<BookEntity, Long> {
     )
     @Query("SELECT b FROM BookEntity b WHERE b.id = :id")
     Optional<BookEntity> findByIdAsync(@Param("id") Long id);
-
-
-    @EntityGraph(
-            value = "Book.withReviewsAndUsers",
-            type = EntityGraph.EntityGraphType.LOAD
-    )
-    @Query("SELECT b FROM BookEntity b WHERE b.id IN :ids")
-    List<BookEntity> findAllWithReviewsByIdIn(@Param("ids") List<Long> ids);
 
 
     @EntityGraph(value = "Book.withReviewsAndUsers", type = EntityGraph.EntityGraphType.LOAD)

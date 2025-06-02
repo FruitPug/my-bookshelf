@@ -1,19 +1,26 @@
 package com.example.MyBookshelf.service;
 
+import com.example.MyBookshelf.dto.UserBookStatusDto;
+import com.example.MyBookshelf.dto.request.BookCreateDto;
+import com.example.MyBookshelf.dto.responce.BookResponseDto;
 import com.example.MyBookshelf.entity.BookEntity;
 import com.example.MyBookshelf.entity.UserEntity;
+import com.example.MyBookshelf.mapper.BookMapper;
+import com.example.MyBookshelf.mapper.UserBookStatusMapper;
 import com.example.MyBookshelf.repository.BookRepository;
-import com.example.MyBookshelf.repository.UserBookStatusRepository;
 import com.example.MyBookshelf.enums.ReadingStatus;
 import com.example.MyBookshelf.entity.UserBookStatusEntity;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -21,99 +28,160 @@ import java.util.concurrent.CompletableFuture;
 public class BookService {
 
     private final BookRepository bookRepository;
-    private final UserBookStatusRepository statusRepository;
+    private final UserBookStatusService statusService;
+    private final CurrentUserService currentUserService;
 
     @Async("taskExecutor")
     @Transactional(readOnly = true)
-    public CompletableFuture<Page<BookEntity>> getAllBooks(Pageable pageable) {
-        Page<BookEntity> page = bookRepository.findAllAsync(pageable);
-        return CompletableFuture.completedFuture(page);
+    public CompletableFuture<Page<BookResponseDto>> getAllBooksDto(Pageable pageable) {
+        Page<BookEntity> entityPage = bookRepository.findAllAsync(pageable);
+
+        return getPageCompletableFuture(entityPage);
     }
 
     @Async("taskExecutor")
-    public CompletableFuture<Optional<BookEntity>> getBookById(Long id) {
-        return CompletableFuture.completedFuture(bookRepository.findByIdAsync(id));
+    @Transactional(readOnly = true)
+    public CompletableFuture<ResponseEntity<BookResponseDto>> getBookByIdDto(Long id) {
+        BookEntity book = bookRepository.findByIdAsync(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
+
+        UserEntity user = currentUserService.get();
+
+        ReadingStatus status = statusService
+                .findByUserAndBook(user, book)
+                .map(UserBookStatusEntity::getStatus)
+                .orElse(null);
+
+        BookResponseDto dto = BookMapper.toResponseDto(book, status);
+
+        return CompletableFuture.completedFuture(ResponseEntity.ok(dto));
     }
 
     @Async("taskExecutor")
-    public CompletableFuture<Page<BookEntity>> getBooksByGenre(String genre, Pageable pageable) {
+    @Transactional(readOnly = true)
+    public CompletableFuture<Page<BookResponseDto>> getBooksByGenreDto(
+            String genre,
+            Pageable pageable
+    ) {
         Page<BookEntity> page = bookRepository.findAll(pageable);
 
         List<BookEntity> filtered = page.getContent().stream()
                 .filter(b -> genre.equalsIgnoreCase(b.getGenre()))
                 .toList();
 
-        Page<BookEntity> result = new PageImpl<>(filtered, pageable, filtered.size());
+        Page<BookEntity> entityPage = new PageImpl<>(filtered, pageable, filtered.size());
 
-        return CompletableFuture.completedFuture(result);
+        return getPageCompletableFuture(entityPage);
     }
 
-    @Async("taskExecutor")
-    public CompletableFuture<Page<BookEntity>> getBooksByStatusForUser(
-            UserEntity user,
+    public Page<BookResponseDto> getBooksByStatusDto(
             String statusStr,
             Pageable pageable
     ) {
-        ReadingStatus status = ReadingStatus.valueOf(statusStr.toUpperCase());
+        UserEntity user = currentUserService.get();
 
-        List<UserBookStatusEntity> statuses =
-                statusRepository.findByUserAndStatus(user, status);
+        ReadingStatus targetStatus = ReadingStatus.valueOf(statusStr.trim().toUpperCase());
 
-        List<Long> bookIds = statuses.stream()
-                .map(ubs -> ubs.getBook().getId())
-                .toList();
+        Page<UserBookStatusEntity> statusPage =
+                statusService.findByUserAndStatus(user, targetStatus, pageable);
 
-        if (bookIds.isEmpty()) {
-            Page<BookEntity> empty = new PageImpl<>(List.of(), pageable, 0);
-            return CompletableFuture.completedFuture(empty);
-        }
-
-        List<BookEntity> allBooks = bookRepository.findAllWithReviewsByIdIn(bookIds);
-
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), allBooks.size());
-        List<BookEntity> pageContent = start > end ? List.of() : allBooks.subList(start, end);
-
-        Page<BookEntity> page = new PageImpl<>(pageContent, pageable, allBooks.size());
-
-        return CompletableFuture.completedFuture(page);
+        return statusPage.map(ubs -> {
+            BookEntity book = ubs.getBook();
+            ReadingStatus actualStatus = ubs.getStatus();
+            return BookMapper.toResponseDto(book, actualStatus);
+        });
     }
 
-
     @Async("taskExecutor")
-    public CompletableFuture<Page<BookEntity>> findTopReviewed(int n) {
+    public CompletableFuture<Page<BookResponseDto>> findTopReviewedDto(int n) {
         PageRequest page = PageRequest.of(0, n, Sort.by("reviewCount").descending());
-        return CompletableFuture.completedFuture(bookRepository.findAllBy(page));
+        Page<BookEntity> entityPage = bookRepository.findAllBy(page);
+
+        Page<BookResponseDto> dtoPage = entityPage.map(book ->
+                BookMapper.toResponseDto(book, null)
+        );
+
+        return CompletableFuture.completedFuture(dtoPage);
     }
 
     @Async("taskExecutor")
-    public CompletableFuture<Page<BookEntity>> findLeastReviewed(int n) {
+    public CompletableFuture<Page<BookResponseDto>> findLeastReviewedDto(int n) {
         PageRequest page = PageRequest.of(0, n, Sort.by("reviewCount").ascending());
-        return CompletableFuture.completedFuture(bookRepository.findAllBy(page));
+        Page<BookEntity> entityPage = bookRepository.findAllBy(page);
+
+        Page<BookResponseDto> dtoPage = entityPage.map(book ->
+                BookMapper.toResponseDto(book, null)
+        );
+
+        return CompletableFuture.completedFuture(dtoPage);
     }
 
     @Async("taskExecutor")
-    public CompletableFuture<Page<BookEntity>> findTopRated(int n) {
+    public CompletableFuture<Page<BookResponseDto>> findTopRatedDto(int n) {
         PageRequest page = PageRequest.of(0, n, Sort.by("rating").descending());
-        return CompletableFuture.completedFuture(bookRepository.findAllBy(page));
+        Page<BookEntity> entityPage = bookRepository.findAllBy(page);
+
+        Page<BookResponseDto> dtoPage = entityPage.map(book ->
+                BookMapper.toResponseDto(book, null)
+        );
+
+        return CompletableFuture.completedFuture(dtoPage);
     }
 
     @Async("taskExecutor")
-    public CompletableFuture<Page<BookEntity>> findLeastRated(int n) {
+    public CompletableFuture<Page<BookResponseDto>> findLeastRatedDto(int n) {
         PageRequest page = PageRequest.of(0, n, Sort.by("rating").ascending());
-        return CompletableFuture.completedFuture(bookRepository.findAllBy(page));
+        Page<BookEntity> entityPage = bookRepository.findAllBy(page);
+
+        Page<BookResponseDto> dtoPage = entityPage.map(book ->
+                BookMapper.toResponseDto(book, null)
+        );
+
+        return CompletableFuture.completedFuture(dtoPage);
     }
 
-    public BookEntity saveBook(BookEntity bookEntity) {
-        return bookRepository.save(bookEntity);
+    public ResponseEntity<Page<UserBookStatusDto>> listStatuses(
+            Pageable pageable
+    ) {
+        UserEntity user = currentUserService.get();
+
+        Page<UserBookStatusEntity> page = statusService.getStatusesForUser(user, pageable);
+
+        Page<UserBookStatusDto> dtoPage = page.map(UserBookStatusMapper::toDto);
+
+        return ResponseEntity.ok(dtoPage);
     }
 
-    public Optional<BookEntity> findById(Long id) {
-        return bookRepository.findByIdAsync(id);
+    public ResponseEntity<BookResponseDto> addBook(BookCreateDto dto) {
+        BookEntity bookEntity = BookMapper.fromCreateDto(dto);
+        bookRepository.save(bookEntity);
+        return ResponseEntity.ok(BookMapper.toResponseDto(bookEntity, null));
     }
 
-    public void deleteBook(Long id) {
+    public BookEntity findById(Long id) {
+        return bookRepository.findByIdAsync(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
+    }
+
+    public ResponseEntity<Void> deleteBook(Long id) {
         bookRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @NotNull
+    private CompletableFuture<Page<BookResponseDto>> getPageCompletableFuture(Page<BookEntity> entityPage) {
+        UserEntity user = currentUserService.get();
+
+        Page<BookResponseDto> dtoPage = entityPage.map(book -> {
+            ReadingStatus status = statusService
+                    .findByUserAndBook(user, book)
+                    .map(UserBookStatusEntity::getStatus)
+                    .orElse(null);
+
+            return BookMapper.toResponseDto(book, status);
+        });
+
+        return CompletableFuture.completedFuture(dtoPage);
     }
 }
 
