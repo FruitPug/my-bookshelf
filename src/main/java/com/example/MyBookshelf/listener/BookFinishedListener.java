@@ -10,20 +10,18 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class BookFinishedListener {
 
-    // synchronous listener
     @EventListener
     public void handle(BookFinishedEvent evt) {
         // e.g. log or update stats
         log.info("User {} finished book {}",
-                evt.getUser().getEmail(),
-                evt.getBook().getTitle());
+                evt.getUserEntity().getEmail(),
+                evt.getBookEntity().getTitle());
     }
 
-    // async version (requires @EnableAsync)
     @Async("taskExecutor")
     @EventListener
     public void sendCongratulationsEmail(BookFinishedEvent evt) {
         // pretend to send an email
-        log.info("Sending congrats email to {}", evt.getUser().getEmail());
+        log.info("Sending congrats email to {}", evt.getUserEntity().getEmail());
     }
 }

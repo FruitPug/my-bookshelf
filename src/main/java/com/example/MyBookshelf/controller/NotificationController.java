@@ -17,7 +17,7 @@ import java.util.Optional;
 @RequestMapping("/notifications")
 @RequiredArgsConstructor
 public class NotificationController {
-    private final SubscriptionService subs;
+    private final SubscriptionService subscriptionService;
     private final UserService userService;
 
     @PostMapping("/subscribe")
@@ -28,7 +28,7 @@ public class NotificationController {
         }
         Long id = optionalUser.get().getId();
 
-        subs.subscribe(id);
+        subscriptionService.subscribe(id);
         return ResponseEntity.ok().build();
     }
 
@@ -40,7 +40,7 @@ public class NotificationController {
         }
         Long id = optionalUser.get().getId();
 
-        subs.unsubscribe(id);
+        subscriptionService.unsubscribe(id);
         return ResponseEntity.ok().build();
     }
 }

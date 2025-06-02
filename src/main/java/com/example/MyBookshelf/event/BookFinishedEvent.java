@@ -7,12 +7,12 @@ import org.springframework.context.ApplicationEvent;
 
 @Getter
 public class BookFinishedEvent extends ApplicationEvent {
-    private final UserEntity user;
-    private final BookEntity book;
+    private final UserEntity userEntity;
+    private final BookEntity bookEntity;
 
-    public BookFinishedEvent(Object source, UserEntity user, BookEntity book) {
+    public BookFinishedEvent(Object source, UserEntity userEntity, BookEntity bookEntity) {
         super(source);
-        this.user = user;
-        this.book = book;
+        this.userEntity = userEntity;
+        this.bookEntity = bookEntity;
     }
 }

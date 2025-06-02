@@ -17,16 +17,16 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class UserBookStatusService {
-    private final UserBookStatusRepository repo;
+    private final UserBookStatusRepository statusRepository;
     private final ApplicationEventPublisher publisher;
 
     @Transactional
     public UserBookStatusEntity setStatus(UserEntity user, BookEntity book, ReadingStatus status) {
-        UserBookStatusEntity ubs = repo.findByUserAndBook(user, book)
+        UserBookStatusEntity ubs = statusRepository.findByUserAndBook(user, book)
                 .orElseGet(() -> UserBookStatusEntity.builder().user(user).book(book).build());
 
         ubs.setStatus(status);
-        UserBookStatusEntity saved = repo.save(ubs);
+        UserBookStatusEntity saved = statusRepository.save(ubs);
 
         if (status == ReadingStatus.READ) {
             publisher.publishEvent(new BookFinishedEvent(this, user, book));
@@ -35,10 +35,10 @@ public class UserBookStatusService {
     }
 
     public Page<UserBookStatusEntity> getStatusesForUser(UserEntity user, Pageable pageable) {
-        return repo.findByUser(user, pageable);
+        return statusRepository.findByUser(user, pageable);
     }
 
     public Optional<UserBookStatusEntity> findByUserAndBook(UserEntity user, BookEntity book){
-        return repo.findByUserAndBook(user, book);
+        return statusRepository.findByUserAndBook(user, book);
     }
 }

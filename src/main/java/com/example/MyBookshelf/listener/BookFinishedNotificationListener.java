@@ -15,12 +15,12 @@ public class BookFinishedNotificationListener {
 
     @EventListener
     public void onBookFinished(BookFinishedEvent ev) {
-        Long uid = ev.getUser().getId();
+        Long uid = ev.getUserEntity().getId();
         if (!subs.isSubscribed(uid)) return;  // skip if user unsubscribed
 
         // simulate sending an email / push
         log.info("✉️ Notifying {} that they finished “{}”",
-                ev.getUser().getEmail(), ev.getBook().getTitle());
+                ev.getUserEntity().getEmail(), ev.getBookEntity().getTitle());
     }
 }
 

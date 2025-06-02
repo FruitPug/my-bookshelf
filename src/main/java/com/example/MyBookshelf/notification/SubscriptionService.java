@@ -10,7 +10,9 @@ public class SubscriptionService {
     private final Set<Long> subscribers = ConcurrentHashMap.newKeySet();
 
     public void subscribe(Long userId)   { subscribers.add(userId); }
+
     public void unsubscribe(Long userId) { subscribers.remove(userId); }
+
     public boolean isSubscribed(Long userId) {
         return subscribers.contains(userId);
     }

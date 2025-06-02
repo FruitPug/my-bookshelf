@@ -12,6 +12,6 @@ public class BookFinishedLoggingListener {
     @EventListener
     public void onBookFinished(BookFinishedEvent ev) {
         log.info("🎉 User {} finished book {}",
-                ev.getUser().getEmail(), ev.getBook().getTitle());
+                ev.getUserEntity().getEmail(), ev.getBookEntity().getTitle());
     }
 }

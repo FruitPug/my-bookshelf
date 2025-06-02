@@ -59,7 +59,6 @@ public class BookController {
             @PathVariable Long id,
             Authentication auth
     ) {
-        // load the user now, outside the future
         UserEntity user = userService.findByEmail(auth.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
@@ -139,7 +138,7 @@ public class BookController {
         UserEntity user = userService.findByEmail(auth.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        return bookService.getBooksByGenre(genre, pageable)  // CF<Page<BookEntity>>
+        return bookService.getBooksByGenre(genre, pageable)
                 .thenApplyAsync(bookPage ->
                                 bookPage.map(book -> {
                                     ReadingStatus status = statusService
@@ -161,7 +160,7 @@ public class BookController {
         UserEntity user = userService.findByEmail(auth.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        return bookService.getBooksByStatusForUser(user, status, pageable)  // CF<List<BookEntity>>
+        return bookService.getBooksByStatusForUser(user, status, pageable)
                 .thenApplyAsync(bookPage ->
                                 bookPage.map(book -> {
                                     ReadingStatus bookStatus = statusService

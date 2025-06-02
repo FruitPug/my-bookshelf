@@ -14,18 +14,18 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RecommendationService {
 
-    private final UserBookStatusRepository statusRepo;
+    private final UserBookStatusRepository statusRepository;
     private final BookService bookService;
 
     @Cacheable(value = "recommendations", key = "#user.id")
     public Page<BookEntity> recommendForUser(UserEntity user, Pageable pageable) {
         // 1) Exclude books already seen
-        Set<BookEntity> excluded = statusRepo.findByUser(user, pageable).stream()
+        Set<BookEntity> excluded = statusRepository.findByUser(user, pageable).stream()
                 .map(UserBookStatusEntity::getBook)
                 .collect(Collectors.toSet());
 
         // 2) Determine top genre
-        String topGenre = statusRepo.findByUser(user, pageable).stream()
+        String topGenre = statusRepository.findByUser(user, pageable).stream()
                 .map(ubs -> ubs.getBook().getGenre())
                 .collect(Collectors.groupingBy(g -> g, Collectors.counting()))
                 .entrySet().stream()
