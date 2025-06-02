@@ -3,6 +3,7 @@ package com.example.MyBookshelf.config;
 import org.springframework.context.annotation.*;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.security.concurrent.DelegatingSecurityContextExecutor;
 
 import java.util.concurrent.Executor;
 
@@ -11,14 +12,14 @@ import java.util.concurrent.Executor;
 public class AsyncConfig {
 
     @Bean("taskExecutor")
-    @Primary
     public Executor taskExecutor() {
-        ThreadPoolTaskExecutor exec = new ThreadPoolTaskExecutor();
-        exec.setCorePoolSize(5);
-        exec.setMaxPoolSize(10);
-        exec.setQueueCapacity(500);
-        exec.setThreadNamePrefix("BookAsync-");
-        exec.initialize();
-        return exec;
+        ThreadPoolTaskExecutor delegate = new ThreadPoolTaskExecutor();
+        delegate.setCorePoolSize(5);
+        delegate.setMaxPoolSize(10);
+        delegate.setQueueCapacity(100);
+        delegate.setThreadNamePrefix("BookAsync-");
+        delegate.initialize();
+
+        return new DelegatingSecurityContextExecutor(delegate);
     }
 }
