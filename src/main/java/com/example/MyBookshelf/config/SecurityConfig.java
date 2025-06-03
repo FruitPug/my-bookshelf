@@ -26,7 +26,6 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                // allow everyone to log in and register
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/register","/auth/login", "/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.POST, "/books").hasRole("ADMIN")

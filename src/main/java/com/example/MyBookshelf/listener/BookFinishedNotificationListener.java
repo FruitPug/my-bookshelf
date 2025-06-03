@@ -19,7 +19,7 @@ public class BookFinishedNotificationListener {
         if (!subs.isSubscribed(uid)) return;  // skip if user unsubscribed
 
         // simulate sending an email / push
-        log.info("✉️ Notifying {} that they finished “{}”",
+        log.info("✉️ Sending {} a congratulatory email “{}”",
                 ev.getUserEntity().getEmail(), ev.getBookEntity().getTitle());
     }
 }

@@ -56,19 +56,16 @@ public class AuthController {
         Authentication auth = new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword());
         Authentication result = authManager.authenticate(auth);
 
-        // 1) Save into SecurityContext
         SecurityContext sc = SecurityContextHolder.createEmptyContext();
         sc.setAuthentication(result);
         SecurityContextHolder.setContext(sc);
 
-        // 2) Create session and store the context under the SPRING_SECURITY_CONTEXT_KEY
         HttpSession session = request.getSession(true);
         session.setAttribute(
                 HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
                 sc
         );
 
-        // 3) Return the session ID as a cookie and header
         Cookie cookie = new Cookie("JSESSIONID", session.getId());
         cookie.setHttpOnly(true);
         cookie.setPath("/");
