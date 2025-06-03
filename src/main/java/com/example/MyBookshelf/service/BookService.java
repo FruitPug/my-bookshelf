@@ -24,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +38,34 @@ public class BookService {
     public Page<BookResponseDto> getAllBooksDto(Pageable pageable) {
         Page<BookEntity> entityPage = bookRepository.findAll(pageable);
 
-        return getPageCompletableFuture(entityPage);
+        return getPage(entityPage);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BookResponseDto> getAllBooksStream(Pageable pageable) {
+        UserEntity user = currentUserService.get();
+        long offset = pageable.getOffset();
+        int size = pageable.getPageSize();
+
+        try (Stream<BookEntity> stream = bookRepository.streamAll()) {
+
+            List<BookResponseDto> content = stream
+                    .skip(offset)
+                    .limit(size)
+                    .map(book -> {
+                        ReadingStatus status = statusService
+                                .findByUserAndBook(user, book)
+                                .map(UserBookStatusEntity::getStatus)
+                                .orElse(null);
+
+                        return BookMapper.toResponseDto(book, status);
+                    })
+                    .toList();
+
+            long total = bookRepository.count();
+
+            return new PageImpl<>(content, pageable, total);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -70,7 +98,7 @@ public class BookService {
 
         Page<BookEntity> entityPage = new PageImpl<>(filtered, pageable, filtered.size());
 
-        return getPageCompletableFuture(entityPage);
+        return getPage(entityPage);
     }
 
     @Async("taskExecutor")
@@ -191,7 +219,7 @@ public class BookService {
     }
 
     @NotNull
-    private Page<BookResponseDto> getPageCompletableFuture(Page<BookEntity> entityPage) {
+    private Page<BookResponseDto> getPage(Page<BookEntity> entityPage) {
         UserEntity user = currentUserService.get();
 
         return entityPage.map(book -> {

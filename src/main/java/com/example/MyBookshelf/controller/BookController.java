@@ -26,44 +26,37 @@ public class BookController {
     private final UserBookStatusService statusService;
 
     @GetMapping
-    public Page<BookResponseDto> getAllBooks(
-            Pageable pageable
-    ) {
+    public Page<BookResponseDto> getAllBooks(Pageable pageable) {
         return bookService.getAllBooksDto(pageable);
     }
 
+    @GetMapping("/stream")
+    public Page<BookResponseDto> getAllBooksStream(Pageable pageable) {
+        return bookService.getAllBooksStream(pageable);
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<BookResponseDto> getBookById(
-            @PathVariable Long id
-    ) {
+    public ResponseEntity<BookResponseDto> getBookById(@PathVariable Long id) {
         return bookService.getBookByIdDto(id);
     }
 
     @GetMapping("/top-reviewed")
-    public Page<BookResponseDto> topReviewed(
-            @RequestParam(defaultValue = "5") int n
-    ) {
+    public Page<BookResponseDto> topReviewed(@RequestParam(defaultValue = "5") int n) {
         return bookService.findTopReviewedDto(n);
     }
 
     @GetMapping("/least-reviewed")
-    public Page<BookResponseDto> leastReviewed(
-            @RequestParam(defaultValue = "5") int n
-    ) {
+    public Page<BookResponseDto> leastReviewed(@RequestParam(defaultValue = "5") int n) {
         return bookService.findLeastReviewedDto(n);
     }
 
     @GetMapping("/top-rated")
-    public Page<BookResponseDto> topRated(
-            @RequestParam(defaultValue = "5") int n
-    ) {
+    public Page<BookResponseDto> topRated(@RequestParam(defaultValue = "5") int n) {
         return bookService.findTopRatedDto(n);
     }
 
     @GetMapping("/least-rated")
-    public Page<BookResponseDto> leastRated(
-            @RequestParam(defaultValue = "5") int n
-    ) {
+    public Page<BookResponseDto> leastRated(@RequestParam(defaultValue = "5") int n) {
         return bookService.findLeastRatedDto(n);
     }
 
