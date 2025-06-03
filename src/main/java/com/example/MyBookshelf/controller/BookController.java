@@ -26,49 +26,49 @@ public class BookController {
     private final UserBookStatusService statusService;
 
     @GetMapping
-    public CompletableFuture<Page<BookResponseDto>> getAllBooksAsync(
+    public Page<BookResponseDto> getAllBooks(
             Pageable pageable
     ) {
         return bookService.getAllBooksDto(pageable);
     }
 
     @GetMapping("/{id}")
-    public CompletableFuture<ResponseEntity<BookResponseDto>> getBookByIdAsync(
+    public ResponseEntity<BookResponseDto> getBookById(
             @PathVariable Long id
     ) {
         return bookService.getBookByIdDto(id);
     }
 
     @GetMapping("/top-reviewed")
-    public CompletableFuture<Page<BookResponseDto>> topReviewedAsync(
+    public Page<BookResponseDto> topReviewed(
             @RequestParam(defaultValue = "5") int n
     ) {
         return bookService.findTopReviewedDto(n);
     }
 
     @GetMapping("/least-reviewed")
-    public CompletableFuture<Page<BookResponseDto>> leastReviewedAsync(
+    public Page<BookResponseDto> leastReviewed(
             @RequestParam(defaultValue = "5") int n
     ) {
         return bookService.findLeastReviewedDto(n);
     }
 
     @GetMapping("/top-rated")
-    public CompletableFuture<Page<BookResponseDto>> topRatedAsync(
+    public Page<BookResponseDto> topRated(
             @RequestParam(defaultValue = "5") int n
     ) {
         return bookService.findTopRatedDto(n);
     }
 
     @GetMapping("/least-rated")
-    public CompletableFuture<Page<BookResponseDto>> leastRatedAsync(
+    public Page<BookResponseDto> leastRated(
             @RequestParam(defaultValue = "5") int n
     ) {
         return bookService.findLeastRatedDto(n);
     }
 
     @GetMapping("/filter/genre/{genre}")
-    public CompletableFuture<Page<BookResponseDto>> getByGenreAsync(
+    public Page<BookResponseDto> getByGenre(
             @PathVariable String genre,
             Pageable pageable
     ) {
@@ -84,7 +84,7 @@ public class BookController {
     }
 
     @GetMapping("/filter/status/{status}")
-    public Page<BookResponseDto> getByStatusAsync(
+    public Page<BookResponseDto> getByStatus(
             @PathVariable String status,
             Pageable pageable
     ) {

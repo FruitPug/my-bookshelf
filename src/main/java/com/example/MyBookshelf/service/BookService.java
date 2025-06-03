@@ -33,18 +33,16 @@ public class BookService {
     private final UserBookStatusService statusService;
     private final CurrentUserService currentUserService;
 
-    @Async("taskExecutor")
     @Transactional(readOnly = true)
-    public CompletableFuture<Page<BookResponseDto>> getAllBooksDto(Pageable pageable) {
-        Page<BookEntity> entityPage = bookRepository.findAllAsync(pageable);
+    public Page<BookResponseDto> getAllBooksDto(Pageable pageable) {
+        Page<BookEntity> entityPage = bookRepository.findAll(pageable);
 
         return getPageCompletableFuture(entityPage);
     }
 
-    @Async("taskExecutor")
     @Transactional(readOnly = true)
-    public CompletableFuture<ResponseEntity<BookResponseDto>> getBookByIdDto(Long id) {
-        BookEntity book = bookRepository.findByIdAsync(id)
+    public ResponseEntity<BookResponseDto> getBookByIdDto(Long id) {
+        BookEntity book = bookRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
 
         UserEntity user = currentUserService.get();
@@ -56,12 +54,11 @@ public class BookService {
 
         BookResponseDto dto = BookMapper.toResponseDto(book, status);
 
-        return CompletableFuture.completedFuture(ResponseEntity.ok(dto));
+        return ResponseEntity.ok(dto);
     }
 
-    @Async("taskExecutor")
     @Transactional(readOnly = true)
-    public CompletableFuture<Page<BookResponseDto>> getBooksByGenreDto(
+    public Page<BookResponseDto> getBooksByGenreDto(
             String genre,
             Pageable pageable
     ) {
@@ -129,52 +126,40 @@ public class BookService {
         });
     }
 
-    @Async("taskExecutor")
-    public CompletableFuture<Page<BookResponseDto>> findTopReviewedDto(int n) {
+    public Page<BookResponseDto> findTopReviewedDto(int n) {
         PageRequest page = PageRequest.of(0, n, Sort.by("reviewCount").descending());
         Page<BookEntity> entityPage = bookRepository.findAllBy(page);
 
-        Page<BookResponseDto> dtoPage = entityPage.map(book ->
+        return entityPage.map(book ->
                 BookMapper.toResponseDto(book, null)
         );
-
-        return CompletableFuture.completedFuture(dtoPage);
     }
 
-    @Async("taskExecutor")
-    public CompletableFuture<Page<BookResponseDto>> findLeastReviewedDto(int n) {
+    public Page<BookResponseDto> findLeastReviewedDto(int n) {
         PageRequest page = PageRequest.of(0, n, Sort.by("reviewCount").ascending());
         Page<BookEntity> entityPage = bookRepository.findAllBy(page);
 
-        Page<BookResponseDto> dtoPage = entityPage.map(book ->
+        return entityPage.map(book ->
                 BookMapper.toResponseDto(book, null)
         );
-
-        return CompletableFuture.completedFuture(dtoPage);
     }
 
-    @Async("taskExecutor")
-    public CompletableFuture<Page<BookResponseDto>> findTopRatedDto(int n) {
+    public Page<BookResponseDto> findTopRatedDto(int n) {
         PageRequest page = PageRequest.of(0, n, Sort.by("rating").descending());
         Page<BookEntity> entityPage = bookRepository.findAllBy(page);
 
-        Page<BookResponseDto> dtoPage = entityPage.map(book ->
+        return entityPage.map(book ->
                 BookMapper.toResponseDto(book, null)
         );
-
-        return CompletableFuture.completedFuture(dtoPage);
     }
 
-    @Async("taskExecutor")
-    public CompletableFuture<Page<BookResponseDto>> findLeastRatedDto(int n) {
+    public Page<BookResponseDto> findLeastRatedDto(int n) {
         PageRequest page = PageRequest.of(0, n, Sort.by("rating").ascending());
         Page<BookEntity> entityPage = bookRepository.findAllBy(page);
 
-        Page<BookResponseDto> dtoPage = entityPage.map(book ->
+        return entityPage.map(book ->
                 BookMapper.toResponseDto(book, null)
         );
-
-        return CompletableFuture.completedFuture(dtoPage);
     }
 
     public ResponseEntity<Page<UserBookStatusDto>> listStatuses(
@@ -196,7 +181,7 @@ public class BookService {
     }
 
     public BookEntity findById(Long id) {
-        return bookRepository.findByIdAsync(id)
+        return bookRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
     }
 
@@ -206,10 +191,10 @@ public class BookService {
     }
 
     @NotNull
-    private CompletableFuture<Page<BookResponseDto>> getPageCompletableFuture(Page<BookEntity> entityPage) {
+    private Page<BookResponseDto> getPageCompletableFuture(Page<BookEntity> entityPage) {
         UserEntity user = currentUserService.get();
 
-        Page<BookResponseDto> dtoPage = entityPage.map(book -> {
+        return entityPage.map(book -> {
             ReadingStatus status = statusService
                     .findByUserAndBook(user, book)
                     .map(UserBookStatusEntity::getStatus)
@@ -217,8 +202,6 @@ public class BookService {
 
             return BookMapper.toResponseDto(book, status);
         });
-
-        return CompletableFuture.completedFuture(dtoPage);
     }
 }
 

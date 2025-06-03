@@ -8,14 +8,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "books")
-@NamedEntityGraph(
-        name = "Book.withReviewsAndUsers",
-        attributeNodes = @NamedAttributeNode(value = "reviewEntities", subgraph = "reviews"),
-        subgraphs = @NamedSubgraph(
-                name = "reviews",
-                attributeNodes = @NamedAttributeNode("user")
-        )
-)
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

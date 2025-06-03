@@ -42,10 +42,10 @@ public class RecommendationService {
 
         Page<BookResponseDto> candidates;
         if (topGenre == null) {
-            candidates = bookService.findTopReviewedDto(size).join();
+            candidates = bookService.findTopRatedDto(size);
         } else {
             PageRequest candidatePage = PageRequest.of(0, size);
-            candidates = bookService.getBooksByGenreDto(topGenre, candidatePage).join();
+            candidates = bookService.getBooksByGenreDto(topGenre, candidatePage);
         }
 
         List<BookResponseDto> allCandidates = candidates.getContent();
