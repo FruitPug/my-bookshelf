@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
@@ -72,6 +73,14 @@ public class BookController {
             Pageable pageable
     ) {
         return bookService.getBooksByGenreDto(genre, pageable);
+    }
+
+    @GetMapping("/filter/genre-async/{genre}")
+    public CompletableFuture<ResponseEntity<List<BookResponseDto>>> getBooksByGenreAsyncWithFilter(
+            @PathVariable String genre
+    ) {
+        return bookService.getBooksByGenreWithAsyncRatingFilter(genre)
+                .thenApply(ResponseEntity::ok);
     }
 
     @GetMapping("/filter/status/{status}")

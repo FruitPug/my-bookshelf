@@ -12,6 +12,7 @@ import com.example.MyBookshelf.enums.ReadingStatus;
 import com.example.MyBookshelf.entity.UserBookStatusEntity;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -72,6 +74,41 @@ public class BookService {
         Page<BookEntity> entityPage = new PageImpl<>(filtered, pageable, filtered.size());
 
         return getPageCompletableFuture(entityPage);
+    }
+
+    @Async("taskExecutor")
+    @Transactional(readOnly = true)
+    public CompletableFuture<List<BookResponseDto>> getBooksByGenreWithAsyncRatingFilter(
+            String genre
+    ) {
+        UserEntity user = currentUserService.get();
+        Page<BookEntity> page = bookRepository.findAll(Pageable.unpaged());
+
+        List<BookEntity> filteredByGenre = page.getContent().stream()
+                .filter(b -> genre.equalsIgnoreCase(b.getGenre()))
+                .toList();
+
+        List<CompletableFuture<Optional<BookEntity>>> futures = filteredByGenre.stream()
+                .map(book -> CompletableFuture.supplyAsync(() ->
+                        (book.getRating() > 4)
+                        ? Optional.of(book)
+                        : Optional.<BookEntity>empty())).toList();
+
+        filteredByGenre.forEach(book -> Hibernate.initialize(book.getReviewEntities()));
+
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                .thenApply(v -> futures.stream()
+                        .map(CompletableFuture::join)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .map(book -> {
+                            ReadingStatus status = statusService
+                                    .findByUserAndBook(user, book)
+                                    .map(UserBookStatusEntity::getStatus)
+                                    .orElse(null);
+                            return BookMapper.toResponseDto(book, status);
+                        })
+                        .toList());
     }
 
     public Page<BookResponseDto> getBooksByStatusDto(
