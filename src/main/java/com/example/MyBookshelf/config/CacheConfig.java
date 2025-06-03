@@ -9,6 +9,6 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        return new ConcurrentMapCacheManager("recommendations", "genreSuggestions");
+        return new ConcurrentMapCacheManager("recommendations");
     }
 }
