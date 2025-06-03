@@ -1,17 +1,19 @@
 package com.example.MyBookshelf.service;
 
+import com.example.MyBookshelf.dto.responce.UserResponseDto;
 import com.example.MyBookshelf.entity.ReviewEntity;
 import com.example.MyBookshelf.entity.UserEntity;
+import com.example.MyBookshelf.mapper.UserMapper;
 import com.example.MyBookshelf.repository.ReviewRepository;
 import com.example.MyBookshelf.repository.UserBookStatusRepository;
 import com.example.MyBookshelf.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,26 +24,32 @@ public class UserService {
     private final UserBookStatusRepository statusRepository;
     private final ReviewService reviewService;
 
-    public List<UserEntity> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserResponseDto> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(UserMapper::toResponseDto)
+                .toList();
     }
 
-    public Optional<UserEntity> getUserById(Long id) {
-        return userRepository.findById(id);
+    public ResponseEntity<UserResponseDto> getUserById(Long id) {
+        return userRepository.findById(id).map(UserMapper::toResponseDto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @Transactional
-    public void deleteUser(Long userId) {
+    public ResponseEntity<Void> deleteUser(Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        for (ReviewEntity r : reviewRepository.findByUser(user)) {
-            reviewService.deleteReview(r.getId());
+        for (ReviewEntity review : reviewRepository.findByUser(user)) {
+            reviewService.deleteReview(review.getId());
         }
 
         statusRepository.deleteByUser(user);
 
         userRepository.delete(user);
+
+        return ResponseEntity.noContent().build();
     }
 
     public UserEntity save(UserEntity user) {
@@ -52,7 +60,4 @@ public class UserService {
         return userRepository.findByEmail(email).isPresent();
     }
 
-    public Optional<UserEntity> findByEmail(String email) {
-        return userRepository.findByEmail(email);
-    }
 }

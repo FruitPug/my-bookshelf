@@ -22,8 +22,6 @@ public class RecommendationController {
             Pageable pageable
     ) {
         UserEntity user = currentUserService.get();
-
-        Page<BookResponseDto> dtoPage = recService.recommendForUser(user, pageable);
-        return ResponseEntity.ok(dtoPage);
+        return recService.recommendForUser(user, pageable);
     }
 }

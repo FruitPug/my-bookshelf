@@ -6,6 +6,7 @@ import com.example.MyBookshelf.repository.UserBookStatusRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -19,7 +20,7 @@ public class RecommendationService {
     private final BookService bookService;
 
     @Cacheable(value = "recommendations", key = "#user.id")
-    public Page<BookResponseDto> recommendForUser(
+    public ResponseEntity<Page<BookResponseDto>> recommendForUser(
             UserEntity user,
             Pageable pageable
     ) {
@@ -53,7 +54,7 @@ public class RecommendationService {
                 .filter(dto -> !excludedIds.contains(dto.getId()))
                 .toList();
 
-        return new PageImpl<>(filtered, pageable, filtered.size());
+        return ResponseEntity.ok(new PageImpl<>(filtered, pageable, filtered.size()));
     }
 
 }

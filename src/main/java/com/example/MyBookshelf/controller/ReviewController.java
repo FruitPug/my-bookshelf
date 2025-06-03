@@ -2,19 +2,13 @@ package com.example.MyBookshelf.controller;
 
 import com.example.MyBookshelf.dto.request.ReviewCreateDto;
 import com.example.MyBookshelf.dto.responce.ReviewResponseDto;
-import com.example.MyBookshelf.entity.ReviewEntity;
 import com.example.MyBookshelf.entity.UserEntity;
-import com.example.MyBookshelf.mapper.ReviewMapper;
-import com.example.MyBookshelf.service.BookService;
+import com.example.MyBookshelf.service.CurrentUserService;
 import com.example.MyBookshelf.service.ReviewService;
-import com.example.MyBookshelf.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
@@ -24,47 +18,24 @@ import java.util.List;
 public class ReviewController {
 
     private final ReviewService reviewService;
-    private final BookService bookService;
-    private final UserService userService;
+    private final CurrentUserService currentUserService;
 
     @GetMapping
-    public List<ReviewResponseDto> getUserReviews(Authentication authentication) {
-        String userEmail = authentication.getName();
-        return reviewService.getReviewsByUserEmail(userEmail).stream()
-                .map(ReviewMapper::toResponseDto)
-                .toList();
+    public List<ReviewResponseDto> getUserReviews() {
+        return reviewService.getReviewsByUserEmail();
     }
 
     @PostMapping("/book/{bookId}")
     public ResponseEntity<ReviewResponseDto> addReview(
             @PathVariable Long bookId,
-            @Valid @RequestBody ReviewCreateDto dto,
-            Authentication authentication
+            @Valid @RequestBody ReviewCreateDto dto
     ) {
-        try {
-            var book = bookService.findById(bookId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
-
-            String email = authentication.getName();
-            UserEntity user = userService.findByEmail(email)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
-
-            ReviewEntity reviewEntity = ReviewMapper.fromRequestDto(dto);
-            reviewEntity.setBook(book);
-            reviewEntity.setUser(user);
-
-            ReviewEntity saved = reviewService.addReview(bookId, reviewEntity, user);
-            ReviewResponseDto response = ReviewMapper.toResponseDto(saved);
-            return ResponseEntity.ok(response);
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(null);
-        }
+        UserEntity user = currentUserService.get();
+        return reviewService.addReview(bookId, dto, user);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReview(@PathVariable Long id) {
-        reviewService.deleteReview(id);
-        return ResponseEntity.noContent().build();
+        return reviewService.deleteReview(id);
     }
 }

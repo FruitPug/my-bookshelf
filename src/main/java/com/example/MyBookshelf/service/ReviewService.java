@@ -1,20 +1,20 @@
 package com.example.MyBookshelf.service;
 
+import com.example.MyBookshelf.dto.request.ReviewCreateDto;
+import com.example.MyBookshelf.dto.responce.ReviewResponseDto;
 import com.example.MyBookshelf.entity.BookEntity;
 import com.example.MyBookshelf.entity.ReviewEntity;
 import com.example.MyBookshelf.entity.UserEntity;
+import com.example.MyBookshelf.mapper.ReviewMapper;
 import com.example.MyBookshelf.repository.BookRepository;
 import com.example.MyBookshelf.repository.ReviewRepository;
-import com.example.MyBookshelf.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,58 +22,52 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final BookRepository bookRepository;
-    private final UserRepository userRepository;
+    private final CurrentUserService currentUserService;
+    private final BookService bookService;
 
 
-    public List<ReviewEntity> getReviewsByUserEmail(String email) {
-        UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
-        return reviewRepository.findByUser(user);
+    public List<ReviewResponseDto> getReviewsByUserEmail() {
+        UserEntity user = currentUserService.get();
+        return reviewRepository.findByUser(user).stream()
+                .map(ReviewMapper::toResponseDto)
+                .toList();
     }
 
     @Transactional
     @CacheEvict(value = "recommendations", key = "#user.id")
-    public ReviewEntity addReview(Long bookId, ReviewEntity reviewEntity, UserEntity user) {
-        Optional<BookEntity> optionalBook = bookRepository.findById(bookId);
-        if (optionalBook.isEmpty()) {
-            throw new EntityNotFoundException("Book not found: " + bookId);
-        }
-        reviewEntity.setBook(optionalBook.get());
+    public ResponseEntity<ReviewResponseDto> addReview(Long bookId, ReviewCreateDto dto, UserEntity user) {
+        BookEntity book = bookService.findById(bookId);
 
-        BookEntity book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("Book not found: " + bookId));
+        ReviewEntity reviewEntity = ReviewMapper.fromRequestDto(dto);
+        reviewEntity.setBook(book);
+        reviewEntity.setUser(user);
 
         reviewRepository.findByUserAndBook(user, book)
                 .ifPresent(r -> {
                     throw new IllegalStateException("You have already reviewed this book");
                 });
 
-        ReviewEntity saved = reviewRepository.save(reviewEntity);
-
         int oldCount = book.getReviewCount();
         double oldAvg  = book.getRating();
 
         int newCount = oldCount + 1;
-        double newAvg = ((oldAvg * oldCount) + saved.getRating()) / newCount;
+        double newAvg = ((oldAvg * oldCount) + reviewEntity.getRating()) / newCount;
 
         book.setReviewCount(newCount);
         book.setRating(newAvg);
 
         bookRepository.save(book);
 
-        return saved;
+        return ResponseEntity.ok(ReviewMapper.toResponseDto(reviewEntity));
     }
 
     @Transactional
-    public void deleteReview(Long reviewId) {
+    public ResponseEntity<Void> deleteReview(Long reviewId) {
         ReviewEntity review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("Review not found: " + reviewId));
         Long bookId = review.getBook().getId();
 
         reviewRepository.deleteById(reviewId);
-
-        BookEntity book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("Book not found: " + bookId));
 
         List<ReviewEntity> remaining = reviewRepository.findByBookId(bookId).stream().toList();
         int count = remaining.size();
@@ -82,9 +76,12 @@ public class ReviewService {
                 .average()
                 .orElse(0.0);
 
+        BookEntity book = review.getBook();
         book.setReviewCount(count);
         book.setRating(avg);
 
         bookRepository.save(book);
+
+        return ResponseEntity.noContent().build();
     }
 }

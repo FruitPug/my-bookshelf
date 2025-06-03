@@ -1,12 +1,12 @@
 package com.example.MyBookshelf.controller;
 
 import com.example.MyBookshelf.dto.responce.UserResponseDto;
+import com.example.MyBookshelf.entity.UserEntity;
 import com.example.MyBookshelf.mapper.UserMapper;
+import com.example.MyBookshelf.service.CurrentUserService;
 import com.example.MyBookshelf.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,34 +17,26 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final CurrentUserService currentUserService;
 
     @GetMapping
     public List<UserResponseDto> getAllUsers() {
-        return userService.getAllUsers().stream()
-                .map(UserMapper::toResponseDto)
-                .toList();
+        return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id)
-                .map(UserMapper::toResponseDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return userService.getUserById(id);
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserResponseDto> me(Authentication auth) {
-        String email = auth.getName();
-        return userService.findByEmail(email)
-                .map(UserMapper::toResponseDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+    public ResponseEntity<UserResponseDto> me() {
+        UserEntity user = currentUserService.get();
+        return ResponseEntity.ok(UserMapper.toResponseDto(user));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+        return userService.deleteUser(id);
     }
 }
