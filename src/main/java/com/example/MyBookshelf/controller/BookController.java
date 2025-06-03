@@ -70,9 +70,10 @@ public class BookController {
 
     @GetMapping("/filter/genre-async/{genre}")
     public CompletableFuture<ResponseEntity<List<BookResponseDto>>> getBooksByGenreAsyncWithFilter(
-            @PathVariable String genre
+            @PathVariable String genre,
+            @RequestParam(defaultValue = "false") boolean cancel
     ) {
-        return bookService.getBooksByGenreWithAsyncRatingFilter(genre)
+        return bookService.getBooksByGenreWithAsyncRatingFilter(genre, cancel)
                 .thenApply(ResponseEntity::ok);
     }
 

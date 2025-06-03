@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -104,8 +105,13 @@ public class BookService {
     @Async("taskExecutor")
     @Transactional(readOnly = true)
     public CompletableFuture<List<BookResponseDto>> getBooksByGenreWithAsyncRatingFilter(
-            String genre
+            String genre,
+            boolean cancel
     ) {
+        if (cancel) {
+            return CompletableFuture.completedFuture(Collections.emptyList());
+        }
+
         UserEntity user = currentUserService.get();
         Page<BookEntity> page = bookRepository.findAll(Pageable.unpaged());
 
