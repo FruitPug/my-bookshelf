@@ -1,6 +1,5 @@
-package com.example.MyBookshelf.notification;
+package com.example.MyBookshelf.service;
 
-import com.example.MyBookshelf.service.CurrentUserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 

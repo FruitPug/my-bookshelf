@@ -1,6 +1,6 @@
 package com.example.MyBookshelf.controller;
 
-import com.example.MyBookshelf.notification.SubscriptionService;
+import com.example.MyBookshelf.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
